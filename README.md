@@ -56,7 +56,9 @@ Scriptet kan startes med å bare kjøre det, eller legge til flere parametere i 
 `./nrk-dl.sh "1" "5" "fleksnes"`
 
 Nedlastningen vil kjøre parallellt med 5 samtidige nedlastninger av Fleksnes
+
 <br>
+
 `./nrk-dl.sh "0" "" "fleksnes"`
 
 Nedlastningen av Fleksnes vil kjøre serielt (laste ned en video om gangen)
