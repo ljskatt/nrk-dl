@@ -1,9 +1,7 @@
 #!/bin/bash
-limit_speed="$1"
-maxspeed="$2"
-parallell="$3"
-threads="$4"
-program="$5"
+parallell="$1"
+threads="$2"
+program="$3"
 min_freespace="1048576" # 1GB er 1048576
 
 ##### Installasjon av pakker som NRK-DL trenger for å fungere
@@ -32,49 +30,6 @@ if [ ! -d "downloads" ]; then
         echo "Kunne ikke opprette mappe 'downloads'"
         exit
     fi
-fi
-
-##### Spørsmål om det er ønsket å begrense nedlastningshastighet
-if [ "$limit_speed" != "0" ] && [ "$limit_speed" != "1" ]; then
-    while true; do
-        echo ""
-        read -p "Begrense nedlastingshastighet [y/n/q]? " response_limitspeed
-        case $response_limitspeed in
-            [Yy]* ) limit_speed=1; break;;
-            [Nn]* ) break;;
-            [Qq]* ) exit;;
-            * ) echo "Svar [y]es, [n]o eller [q]uit";;
-        esac
-    done
-fi
-
-##### Spørsmål om hvilken maksimumhastighet du ønsker å begrense nedlastningene til, ikke nødvendig om forje spørsmål var nei
-if [ "$maxspeed" = "" ]; then
-    if [ "$limit_speed" = 1 ]; then
-        while true; do
-            echo ""
-            read -p "Max hastighet i bytes pr sekund, eksempler: 1M, 1.2M, 100K: " response_maxspeed
-            case $response_maxspeed in
-                [123456789][1234567890][1234567890][1234567890][1234567890][BbKkMmGg] ) maxspeed="$response_maxspeed";break;;
-                [123456789][1234567890][1234567890][1234567890][BbKkMmGg] ) maxspeed="$response_maxspeed";break;;
-                [123456789][1234567890][1234567890][BbKkMmGg] ) maxspeed="$response_maxspeed";break;;
-                [123456789][1234567890][BbKkMmGg] ) maxspeed="$response_maxspeed";break;;
-                [123456789][BbKkMmGg] ) maxspeed="$response_maxspeed";break;;
-                * ) echo "Svar [y]es, [n]o eller [q]uit";;
-            esac
-        done
-    else
-        limit_speed="0"
-    fi
-else
-    case $maxspeed in
-        [123456789][1234567890][1234567890][1234567890][1234567890][BbKkMmGg] ) break;;
-        [123456789][1234567890][1234567890][1234567890][BbKkMmGg] ) break;;
-        [123456789][1234567890][1234567890][BbKkMmGg] ) break;;
-        [123456789][1234567890][BbKkMmGg] ) break;;
-        [123456789][BbKkMmGg] ) break;;
-        * ) echo "";echo "Nedlastningshastighet mangler suffix";exit;;
-    esac
 fi
 
 ##### Spørsmål om å laste ned parallellt
@@ -165,19 +120,23 @@ done
 links=$(echo "$links_raw" | grep "tv.nrk.no")
 links_num=$(echo "$links" | wc -l)
 progress="0"
-gb_freespace=
 
 ##### Seriell nedlastning
 if [ "$parallell" = "0" ]; then
     for link in ${links}
     do
-        if [ "$limit_speed" = "1" ]; then
-            progress=$(expr $progress + 1)
-            echo "Starter nedlastning ($progress/$links_num)"
-            youtube-dl -r "$maxspeed" "$link"
-        else
-            youtube-dl "$link"
-        fi
+        while true; do
+            if [ "$cur_freespace" -gt "$min_freespace" ]; then
+                progress=$(expr $progress + 1)
+                printf "\n\n"
+                echo "Starter nedlastning ($progress/$links_num)"
+                youtube-dl "$link"
+                break;
+            else
+                echo "Lite plass ledig, avventer til det er $(expr $min_freespace / 1048576)GB plass ledig, venter 30 sekunder..."
+                sleep 30
+            fi
+        done
     done
 fi
 
@@ -200,11 +159,7 @@ if [ "$parallell" = "1" ]; then
                     thread_num=$(expr $thread_num + 1)
                     screen -S "nrk-dl-$program-$thread_num" -d -m
                     sleep 0.1
-                    if [ "$limit_speed" = "1" ]; then
-                        screen -r "nrk-dl-$program-$thread_num" -X stuff "youtube-dl -r $maxspeed $link"
-                    else
-                        screen -r "nrk-dl-$program-$thread_num" -X stuff "youtube-dl $link"
-                    fi
+                    screen -r "nrk-dl-$program-$thread_num" -X stuff "youtube-dl $link"
                     sleep 0.1
                     screen -r "nrk-dl-$program-$thread_num" -X stuff '\n'
                     sleep 0.1

@@ -44,21 +44,19 @@ Scriptet kan startes med å bare kjøre det, eller legge til flere parametere i 
 
 ### Parametere
 
-- Begrenset hastighet: (0/1)
-- Maks hastighet: (Tall fra 1-99999, og ending B/K/M)
 - Kjøre det parallellt: (0/1)
 - Hvor mange nedlastninger skal kjøre samtidig: (2-99)
 - Program: (program)
 
-`./nrk-dl.sh "<0/1>" "<1-9999><b/k/m/g>" "<0/1>" "<2-99>" "<program>"`
+`./nrk-dl.sh "<0/1>" "<2-99>" "<program>"`
 
 
 #### Eksempel
 
-`./nrk-dl.sh "1" "10M" "1" "5" "fleksnes"`
+`./nrk-dl.sh "1" "5" "fleksnes"`
 
-Nedlastningen vil da begrense hastighet med 10MB/s (80Mbit/s), og laste ned parallellt med 5 samtidige nedlastninger av Fleksnes
+Nedlastningen vil kjøre parallellt med 5 samtidige nedlastninger av Fleksnes
 <br>
-`./nrk-dl.sh "0" "" "0" "" "fleksnes"`
+`./nrk-dl.sh "0" "" "fleksnes"`
 
-Nedlastningen vil da ikke begrense hastighet, og vil kjøre serielt (laste ned en video om gangen)
+Nedlastningen av Fleksnes vil kjøre serielt (laste ned en video om gangen)
