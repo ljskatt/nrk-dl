@@ -1,8 +1,32 @@
-## NRK-DL
+# NRK-DL
 
 Dette prosjektet ble startet etter at det ble kjent at NRK innhold fra før 1997 kan bli borte fra NRK om det ikke kommer en ny avtale på plass med Norwaco, derfor bestemte jeg meg for å lage et script som gjør at man lett kan laste ned innehold fra NRK, slik at man kan holde på denne arven.
 
+## Windows
+
 ### Dependencies
+
+Dette vil automatisk bli lastet ned når du kjører scriptet
+
+- youtube-dl.exe - Denne pakken gjør at man kan laste ned videofilen fra NRK sine servere
+
+### Start
+
+Last ned filen og kjør kommandoen for å begynne å laste ned episoder, scriptet vil selv laste ned youtube-dl.exe filen som den trenger
+
+`./nrk-dl.ps1 "<program>"`
+
+### Eksempel
+
+`./nrk-dl.ps1 "fleksnes"`
+
+Scriptet vil da laste ned alle episodene av Fleksnes som er tilgjengelig på NRK sine servere
+
+## Linux (Debian, Ubuntu)
+
+### Dependencies
+
+Dette vil automatisk bli lastet ned når du kjører scriptet (Støtter bare Debian og Ubuntu for øyeblikket)
 
 - youtube-dl - Denne pakken gjør at man kan laste ned videofilen fra NRK sine servere
  - curl - Denne pakken trenger man for å kunne kommunisere med NRK sitt API
