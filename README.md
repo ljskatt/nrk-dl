@@ -51,7 +51,7 @@ Scriptet kan startes med å bare kjøre det, eller legge til flere parametere i 
 `./nrk-dl.sh "<0/1>" "<2-99>" "<program>"`
 
 
-#### Eksempel
+### Eksempel
 
 `./nrk-dl.sh "1" "5" "fleksnes"`
 
