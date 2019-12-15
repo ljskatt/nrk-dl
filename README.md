@@ -1,7 +1,6 @@
 ## NRK-DL
 
-Dette prosjektet ble startet etter at det ble kjent at NRK innhold fra før 1997 kan bli borte fra NRK om det ikke kommer en ny avtale på plass med Norwaco, derfor bestemte jeg meg for å lage et script som gjør prosessen med å laste ned innehold fra NRK, slik at man kan holde på denne arven.
-NRK-DL kobler seg blandt annet opp mot NRK sitt API for å hente alle episodene til serien/programmet slik at du slipper å skrive alt dette ned selv når du skal laste ned.
+Dette prosjektet ble startet etter at det ble kjent at NRK innhold fra før 1997 kan bli borte fra NRK om det ikke kommer en ny avtale på plass med Norwaco, derfor bestemte jeg meg for å lage et script som gjør at man lett kan laste ned innehold fra NRK, slik at man kan holde på denne arven.
 
 ### Dependencies
 
