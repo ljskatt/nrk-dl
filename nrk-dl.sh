@@ -69,8 +69,8 @@ if [ "$parallell" != "0" ]; then
         done
     else
         case $threads in
-            [123456789][1234567890] ) break;;
-            [23456789] ) break;;
+            [123456789][1234567890] );;
+            [23456789] );;
             * ) echo "";echo "Feil: Bruk tall fra 2 til 99"; exit;;
         esac
     fi
@@ -88,8 +88,6 @@ if [ "$program" = "" ]; then
         if [ "$program_check" = "" ]; then
             echo ""
             echo "404: Finner ikke serie"
-        else
-            break;
         fi
     done
 else
