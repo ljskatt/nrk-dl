@@ -17,8 +17,17 @@ if [ ! -f "nrk-dl-installed.txt" ]; then
             * ) echo "Svar [y]es, [n]o eller [q]uit"; echo "";;
         esac
     done
-    apt-get update
-    apt-get -y install youtube-dl curl jq screen
+	read -p "Bruker du en Debian-basert eller Arch-basert distro [d/a]?" distro
+		case $distro in
+			[Dd]* )
+		 		apt-get update
+				apt-get -y install youtube-dl curl jq screen
+				;;
+			[Aa]* ) 
+				sudo pacman -Syy
+				sudo pacman -S -y youtube-dl curl jq screen
+				;;
+		esac
     echo "1" > "nrk-dl-installed.txt"
 fi
 
@@ -36,7 +45,7 @@ fi
 if [ "$parallell" != "0" ] && [ "$parallell" != "1" ]; then
     while true; do
         echo ""
-        read -p "Ønsker du å laste ned paralellt [y/n/q]? (Anbefalt om du har god båndbredde på nettverket) " response_parallelt
+        read -p "Ønsker du å laste ned parallelt [y/n/q]? (Anbefalt om du har god båndbredde på nettverket) " response_parallelt
         case $response_parallelt in
             [Yy]* ) parallell=1; break;;
             [Nn]* ) parallell=0; break;;
