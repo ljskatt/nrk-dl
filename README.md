@@ -28,7 +28,7 @@ Scriptet vil da laste ned alle episodene av Fleksnes som er tilgjengelig på NRK
 
 ### Dependencies
 
-Dette vil automatisk bli lastet ned når du kjører scriptet (Støtter Debian-baserte og Arch-baserte distroer for øyeblikket)
+Dette vil automatisk bli lastet ned når du kjører scriptet (Støtter Debian-baserte, Arch-baserte distroer og CentOS for øyeblikket)
 
 - youtube-dl - Denne pakken gjør at man kan laste ned videofilen fra NRK sine servere
  - curl - Denne pakken trenger man for å kunne kommunisere med NRK sitt API
