@@ -16,7 +16,6 @@ if (!(Test-Path "downloads")) {
     }   
 }
 
-
 $seasons_req = Invoke-RestMethod "http://psapi-granitt-prod-ne.cloudapp.net/series/$program"
 $seasons = $seasons_req.seasons.id
 if ($null -eq $seasons) {
