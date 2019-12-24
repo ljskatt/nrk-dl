@@ -1,4 +1,3 @@
-
 $program = $args[0]
 $root_location = Get-Location
 
