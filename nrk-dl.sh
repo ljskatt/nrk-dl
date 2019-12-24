@@ -119,8 +119,6 @@ else
     if [ "$program_check" = "" ]; then
         echo "" "404: Finner ikke serie"
         exit
-    else
-        break;
     fi
 fi
 
