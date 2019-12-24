@@ -3,12 +3,12 @@ parallell="$1"
 threads="$2"
 program="$3"
 min_freespace="1048576" # 1GB er 1048576
+packages="youtube-dl curl jq screen"
 
 ##### Installasjon av pakker som NRK-DL trenger for å fungere
 if [ ! -f "nrk-dl-installed.txt" ]; then
     while true; do
-        echo "NRK-DL krever at youtube-dl, curl, jq og screen installeres for at NRK-DL skal fungere"
-        echo ""
+        echo "NRK-DL krever at youtube-dl, curl, jq og screen installeres for at NRK-DL skal fungere" ""
         read -p "Ønsker du at vi gjør dette for deg automatisk [y/n/q]? " install
         case $install in
             [Yy]* ) break;;
@@ -17,17 +17,46 @@ if [ ! -f "nrk-dl-installed.txt" ]; then
             * ) echo "Svar [y]es, [n]o eller [q]uit"; echo "";;
         esac
     done
-	read -p "Bruker du en Debian-basert eller Arch-basert distro [d/a]?" distro
-		case $distro in
-			[Dd]* )
-		 		apt-get update
-				apt-get -y install youtube-dl curl jq screen
-				;;
-			[Aa]* ) 
-				sudo pacman -Syy
-				sudo pacman -S -y youtube-dl curl jq screen
-				;;
-		esac
+
+    # Sjekk hvilke package managers eksisterer
+    apt_path=$(command -v apt-get)
+    yum_path=$(command -v yum)
+    pacman_path=$(command -v pacman)
+
+    if [ "$EUID" -ne 0 ]; then
+        sudo_exist=$(command -v sudo)
+        if [ "$sudo_exist" = "" ]; then
+            echo "Kjører ikke som root, har heller ikke sudo installert"
+            exit
+        fi
+        
+        if [ "$apt_path" != "" ]; then
+            echo "Installerer pakker for Deiban basert OS"
+            sudo apt-get update
+            sudo apt-get -y install $packages
+        elif [ "$yum_path" != "" ]; then
+            echo "Installerer pakker for CentOS"
+            sudo yum -y install $packages
+        elif [ "$pacman_path" != "" ]; then
+            echo "Installerer pakker for Arch basert OS"
+            sudo pacman -Syy
+			sudo pacman -S -y $packages
+        fi
+    else
+        if [ "$apt_path" != "" ]; then
+            echo "Installerer pakker for Deiban basert OS"
+            apt-get update
+            apt-get -y install $packages
+        elif [ "$yum_path" != "" ]; then
+            echo "Installerer pakker for CentOS"
+            yum -y install $packages
+        elif [ "$pacman_path" != "" ]; then
+            echo "Installerer pakker for Arch basert OS"
+            pacman -Syy
+			pacman -S -y $packages
+        fi
+    fi
+    
     echo "1" > "nrk-dl-installed.txt"
 fi
 
