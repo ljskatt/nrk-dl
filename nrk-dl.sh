@@ -63,8 +63,7 @@ fi
 if [ ! -d "downloads" ]; then
     mkdir "downloads"
     if [ ! -d "downloads" ]; then
-        echo ""
-        echo "Kunne ikke opprette mappe 'downloads'"
+        echo "" "Kunne ikke opprette mappe 'downloads'"
         exit
     fi
 fi
@@ -107,22 +106,18 @@ fi
 ##### Spørsmål om hvilken serie som ønskes lastet ned
 if [ "$program" = "" ]; then
     while true; do
-        echo ""
-        echo "https://tv.nrk.no/serie/<serienavn>"
-        echo ""
+        echo "" "https://tv.nrk.no/serie/<serienavn>" ""
         read -p "Hvilken serie ønsker du å laste ned? " program
 
         program_check=$(curl -s "http://psapi-granitt-prod-ne.cloudapp.net/series/$program" | grep "https://tv.nrk.no/serie")
         if [ "$program_check" = "" ]; then
-            echo ""
-            echo "404: Finner ikke serie"
+            echo "" "404: Finner ikke serie"
         fi
     done
 else
     program_check=$(curl -s "http://psapi-granitt-prod-ne.cloudapp.net/series/$program" | grep "https://tv.nrk.no/serie")
     if [ "$program_check" = "" ]; then
-        echo ""
-        echo "404: Finner ikke serie"
+        echo "" "404: Finner ikke serie"
         exit
     else
         break;
@@ -133,8 +128,7 @@ fi
 if [ ! -d "downloads/${program}" ]; then
     mkdir "downloads/${program}"
     if [ ! -d "downloads/${program}" ]; then
-        echo ""
-        echo "Kunne ikke opprette mappe: downloads/${program}"
+        echo "" "Kunne ikke opprette mappe: downloads/${program}"
         exit
     fi
 fi
@@ -212,6 +206,5 @@ if [ "$parallell" = "1" ]; then
             fi
         done
     done
-    echo ""
-    echo "Alle nedlastninger har staret, de kjører i bakgrunn så pass på at de får kjørt seg ferdig (screen -list)"
+    echo "" "Alle nedlastninger har staret, de kjører i bakgrunn så pass på at de får kjørt seg ferdig (screen -list)"
 fi
