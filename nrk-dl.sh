@@ -56,7 +56,6 @@ if [ ! -f "nrk-dl-installed.txt" ]; then
 			pacman -S -y $packages
         fi
     fi
-    
     echo "1" > "nrk-dl-installed.txt"
 fi
 
