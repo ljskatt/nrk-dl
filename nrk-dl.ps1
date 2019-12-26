@@ -16,8 +16,8 @@ if (!(Test-Path "downloads")) {
     }   
 }
 
-$seasons_req = Invoke-RestMethod "http://psapi-granitt-prod-ne.cloudapp.net/series/$program"
-$seasons = $seasons_req.seasons.id
+$seasons_req = Invoke-RestMethod "https://psapi.nrk.no/tv/catalog/series/$program"
+$seasons = $seasons_req._links.seasons.name
 if ($null -eq $seasons) {
     Write-Output "Kunne ikke finne program/serie"
     exit
