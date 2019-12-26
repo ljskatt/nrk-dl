@@ -142,7 +142,6 @@ do
     season_links=$(curl -s "http://psapi-granitt-prod-ne.cloudapp.net/series/$program/seasons/$season/Episodes" | jq '.[]._links.share.href' | cut -f 2 -d '"')
     links_raw+="$season_links"
     links_raw+=$'\n'
-
 done
 links=$(echo "$links_raw" | grep "tv.nrk.no")
 links_num=$(echo "$links" | wc -l)
