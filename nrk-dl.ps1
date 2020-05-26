@@ -6,9 +6,10 @@ if ($program -eq ""){
     exit
 }
 
+$program = "fleksnes"
+
 if (!(Test-Path "youtube-dl.exe")) {
     Invoke-WebRequest "https://youtube-dl.org/downloads/latest/youtube-dl.exe" -OutFile "youtube-dl.exe"
-    $youtube_dl_path = (Get-Location).Path
 }
 
 if (!(Test-Path "downloads")) {
@@ -45,7 +46,7 @@ $episodes = @{}
 
 foreach ($season in $seasons) {
     $episodes_req = Invoke-RestMethod "https://psapi.nrk.no/tv/catalog/series/$program/seasons/$season"
-    $episodes_raw = $episodes_req._embedded.episodes._links.share.href
+    $episodes_raw = $episodes_req._embedded.instalments.prfId
 
     foreach ($episode_raw in $episodes_raw) {
         $episodes = $episodes + @{$episode_raw=$episode_raw}
@@ -59,7 +60,7 @@ foreach ($episode in $episodes.Values) {
     $download_count = $download_count + 1
     Write-Output "" "" "" "Downloading $download_count/$episodes_count"
     $episode = $episode -replace '{&autoplay,t}', ''
-    & "$root_location\youtube-dl.exe" "$episode"
+    & "$root_location\youtube-dl.exe" "https://tv.nrk.no/se?v=$episode"
 }
 
 Set-Location "$root_location"
