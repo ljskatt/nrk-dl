@@ -6,8 +6,6 @@ if ($program -eq ""){
     exit
 }
 
-$program = "fleksnes"
-
 if (!(Test-Path "youtube-dl.exe")) {
     Invoke-WebRequest "https://youtube-dl.org/downloads/latest/youtube-dl.exe" -OutFile "youtube-dl.exe"
 }
