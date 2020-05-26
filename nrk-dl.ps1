@@ -1,8 +1,14 @@
 $program = $args[0]
 $root_location = Get-Location
 
+if ($program -eq ""){
+    Write-Output "Missing program name"
+    exit
+}
+
 if (!(Test-Path "youtube-dl.exe")) {
     Invoke-WebRequest "https://youtube-dl.org/downloads/latest/youtube-dl.exe" -OutFile "youtube-dl.exe"
+    $youtube_dl_path = (Get-Location).Path
 }
 
 if (!(Test-Path "downloads")) {
@@ -38,8 +44,8 @@ Set-Location "downloads/$program"
 $episodes = @{}
 
 foreach ($season in $seasons) {
-    $episodes_req = Invoke-RestMethod "http://psapi-granitt-prod-ne.cloudapp.net/series/$program/seasons/$season/Episodes"
-    $episodes_raw = $episodes_req._links.share.href
+    $episodes_req = Invoke-RestMethod "https://psapi.nrk.no/tv/catalog/series/$program/seasons/$season"
+    $episodes_raw = $episodes_req._embedded.episodes._links.share.href
 
     foreach ($episode_raw in $episodes_raw) {
         $episodes = $episodes + @{$episode_raw=$episode_raw}
@@ -52,7 +58,8 @@ $download_count = 0
 foreach ($episode in $episodes.Values) {
     $download_count = $download_count + 1
     Write-Output "" "" "" "Downloading $download_count/$episodes_count"
-    & $root_location\youtube-dl.exe "$episode"
+    $episode = $episode -replace '{&autoplay,t}', ''
+    & "$root_location\youtube-dl.exe" "$episode"
 }
 
 Set-Location "$root_location"
