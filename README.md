@@ -12,15 +12,22 @@ Dette vil automatisk bli lastet ned når du kjører scriptet
 
 ### Start
 
-Last ned filen og kjør kommandoen for å begynne å laste ned episoder, scriptet vil selv laste ned youtube-dl.exe filen som den trenger
+Last ned filen og kjør kommandoen for å begynne å laste ned episoden/episoder, scriptet vil selv laste ned youtube-dl.exe filen som den trenger.
 
 `./nrk-dl.ps1 "<program>"`
 
 ### Eksempel
 
-`./nrk-dl.ps1 "fleksnes"`
+```
+https://tv.nrk.no/serie/fleksnes
+https://tv.nrk.no/program/KOID20001420
+```
 
-Scriptet vil da laste ned alle episodene av Fleksnes som er tilgjengelig på NRK sine servere
+`./nrk-dl.ps1 "fleksnes"`
+Scriptet vil laste ned alle episodene av Fleksnes
+
+`./nrk-dl.ps1 "KOID20001420"`
+Scriptet vil laste ned programmet
 
 <br>
 
