@@ -49,6 +49,7 @@ if (!(Test-Path "downloads/$name")) {
 Set-Location "downloads/$name"
 
 if ($type -eq "standalone"){
+    $standalone = $standalone -replace '{&autoplay,t}', ''
     & "$root_location\youtube-dl.exe" "$standalone"
 }
 
