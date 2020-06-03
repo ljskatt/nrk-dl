@@ -1,16 +1,25 @@
+param (
+    [Parameter(Mandatory, Position = 0)]
+    [string]
+    $Name,
+
+    [Parameter()]
+    [switch]
+    $Drop_subtitles
+)
+
 $ProgressPreference = 'SilentlyContinue'
-$name = $args[0]
 $root_location = Get-Location
 
-if (!(Test-Path "youtube-dl.exe")) {
+if (!(Test-Path -PathType "Leaf" -Path "youtube-dl.exe")) {
     Write-Output "Downloading youtube-dl"
     Invoke-WebRequest "https://youtube-dl.org/downloads/latest/youtube-dl.exe" -OutFile "youtube-dl.exe"
     Write-Output "Downloaded youtube-dl"
 }
 
-if (!(Test-Path "downloads")) {
-    New-Item -ItemType Directory "downloads" | Out-Null
-    if (Test-Path "downloads") {
+if (!(Test-Path -PathType "Container" -Path "downloads")) {
+    New-Item -ItemType "Directory" -Path "downloads" | Out-Null
+    if (Test-Path -PathType "Container" -Path "downloads") {
         Write-Output "Opprettet downloads mappe"
     }
     else {
@@ -36,9 +45,9 @@ else {
     }
 }
 
-if (!(Test-Path "downloads/$name")) {
-    New-Item -ItemType Directory "downloads/$name" | Out-Null
-    if (Test-Path "downloads/$name"){
+if (!(Test-Path -PathType "Container" -Path "downloads/$name")) {
+    New-Item -ItemType "Directory" -Path "downloads/$name" | Out-Null
+    if (Test-Path -PathType "Container" -Path "downloads/$name"){
         Write-Output "Opprettet $name mappe"
     }
     else {
@@ -46,7 +55,7 @@ if (!(Test-Path "downloads/$name")) {
         exit
     }
 }
-Set-Location "downloads/$name"
+Set-Location -Path "downloads/$name"
 
 if ($type -eq "standalone"){
     $standalone = $standalone -replace '{&autoplay,t}', ''
@@ -54,30 +63,64 @@ if ($type -eq "standalone"){
 }
 
 if ($type -eq "series"){
-    $episodes = @{}
+    $episodes = @()
+    $subtitles = @()
     foreach ($season in $seasons) {
         $episodes_req = Invoke-RestMethod "https://psapi.nrk.no/tv/catalog/series/$name/seasons/$season"
-        $episodes_raw = $episodes_req._embedded.episodes._links.share.href
+        
 
-        foreach ($episode_raw in $episodes_raw) {
-            $episodes = $episodes + @{$episode_raw=$episode_raw}
+        foreach ($episode_raw in $episodes_req._embedded.episodes) {
+            $episodes += New-Object -TypeName "PSObject" -Property @{'url'=$episode_raw._links.share.href;'season'="$season"}
+
+            if (!($Drop_subtitles)) {
+                $episode_id = $episode_raw.prfId
+                $subs = $null
+                $subs = (invoke-restmethod "https://psapi.nrk.no/playback/manifest/program/$episode_id").playable.subtitles
+                foreach ($sub in $subs) {
+                    $subtitles += New-Object -TypeName "PSObject" -Property @{'id'=$episode_id;'language'=$sub.language;'url'=$sub.webVtt;'season'="$season"}
+                }
+            }
         }
 
-        $episodes_raw2 = $episodes_req._embedded.instalments._links.share.href
+        foreach ($episode_raw in $episodes_req._embedded.instalments) {
+            $episodes += New-Object -TypeName "PSObject" -Property @{'url'=$episode_raw._links.share.href;'season'="$season"}
 
-        foreach ($episode_raw in $episodes_raw2) {
-            $episodes = $episodes + @{$episode_raw=$episode_raw}
+            if (!($Drop_subtitles)) {
+                $episode_id = $episode_raw.prfId
+                $subs = $null
+                $subs = (invoke-restmethod "https://psapi.nrk.no/playback/manifest/program/$episode_id").playable.subtitles
+                foreach ($sub in $subs) {
+                    $subtitles += New-Object -TypeName "PSObject" -Property @{'id'=$episode_id;'language'=$sub.language;'url'=$sub.webVtt;'season'="$season"}
+                }
+            }
         }
     }
 
-    $episodes_count = $episodes.Values.Count
+    $episodes_count = $episodes.Count
     $download_count = 0
 
-    foreach ($episode in $episodes.Values) {
+    foreach ($episode in $episodes) {
+        if (!(Test-Path -PathType "Container" -Path $episode.season)){
+            New-Item -ItemType "Directory" -Path $episode.season | Out-Null
+        }
+        Set-Location -Path $episode.season
         $download_count = $download_count + 1
         Write-Output "" "" "" "Downloading $download_count/$episodes_count"
-        $episode = $episode -replace '{&autoplay,t}', ''
-        & "$root_location\youtube-dl.exe" "$episode"
+        $episode.url = $episode.url -replace '{&autoplay,t}', ''
+        & "$root_location\youtube-dl.exe" $episode.url
+        Set-Location -Path "$root_location/downloads/$name"
+    }
+    if (!($Drop_subtitles)) {
+        foreach ($subtitle in $subtitles) {
+            $subtitle_id = $subtitle.id
+            $subtitle_lang = $subtitle.language
+            $subtitle_season = $subtitle.season
+            $subtitle_url = $subtitle.url
+            if (!(Test-Path -PathType "Container" -Path "$subtitle_season")){
+                New-Item -ItemType "Directory" -Path "$subtitle_season"
+            }
+            Invoke-WebRequest -Uri "$subtitle_url" -OutFile "$subtitle_season/$subtitle_id.$subtitle_lang.vtt"
+        }
     }
 }
 
