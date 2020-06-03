@@ -5,7 +5,11 @@ param (
 
     [Parameter()]
     [switch]
-    $Drop_subtitles
+    $Drop_subtitles,
+
+    [Parameter()]
+    [switch]
+    $Drop_video
 )
 
 $ProgressPreference = 'SilentlyContinue'
@@ -70,7 +74,9 @@ if ($type -eq "series"){
         
 
         foreach ($episode_raw in $episodes_req._embedded.episodes) {
-            $episodes += New-Object -TypeName "PSObject" -Property @{'url'=$episode_raw._links.share.href;'season'="$season"}
+            if (!($Drop_video)) {
+                $episodes += New-Object -TypeName "PSObject" -Property @{'url'=$episode_raw._links.share.href;'season'="$season"}
+            }
 
             if (!($Drop_subtitles)) {
                 $episode_id = $episode_raw.prfId
@@ -83,7 +89,9 @@ if ($type -eq "series"){
         }
 
         foreach ($episode_raw in $episodes_req._embedded.instalments) {
-            $episodes += New-Object -TypeName "PSObject" -Property @{'url'=$episode_raw._links.share.href;'season'="$season"}
+            if (!($Drop_video)) {
+                $episodes += New-Object -TypeName "PSObject" -Property @{'url'=$episode_raw._links.share.href;'season'="$season"}
+            }
 
             if (!($Drop_subtitles)) {
                 $episode_id = $episode_raw.prfId
@@ -96,28 +104,36 @@ if ($type -eq "series"){
         }
     }
 
-    $episodes_count = $episodes.Count
-    $download_count = 0
+    
 
-    foreach ($episode in $episodes) {
-        if (!(Test-Path -PathType "Container" -Path $episode.season)){
-            New-Item -ItemType "Directory" -Path $episode.season | Out-Null
+    if (!($Drop_video)) {
+        $episodes_count = $episodes.Count
+        $download_count = 0
+        foreach ($episode in $episodes) {
+            if (!(Test-Path -PathType "Container" -Path $episode.season)){
+                New-Item -ItemType "Directory" -Path $episode.season | Out-Null
+            }
+            Set-Location -Path $episode.season
+            $download_count = $download_count + 1
+            Write-Output "" "" "" "Downloading ($download_count/$episodes_count)"
+            $episode.url = $episode.url -replace '{&autoplay,t}', ''
+            & "$root_location\youtube-dl.exe" $episode.url
+            Set-Location -Path "$root_location/downloads/$name"
         }
-        Set-Location -Path $episode.season
-        $download_count = $download_count + 1
-        Write-Output "" "" "" "Downloading $download_count/$episodes_count"
-        $episode.url = $episode.url -replace '{&autoplay,t}', ''
-        & "$root_location\youtube-dl.exe" $episode.url
-        Set-Location -Path "$root_location/downloads/$name"
     }
     if (!($Drop_subtitles)) {
+        Write-Output "" ""
+        $subtitles_count = $subtitles.Count
+        $sub_dl_count = 0
         foreach ($subtitle in $subtitles) {
+            $sub_dl_count = $sub_dl_count + 1
+            Write-Output "Downloading subtitle ($sub_dl_count/$subtitles_count)"
             $subtitle_id = $subtitle.id
             $subtitle_lang = $subtitle.language
             $subtitle_season = $subtitle.season
             $subtitle_url = $subtitle.url
             if (!(Test-Path -PathType "Container" -Path "$subtitle_season")){
-                New-Item -ItemType "Directory" -Path "$subtitle_season"
+                New-Item -ItemType "Directory" -Path "$subtitle_season" | Out-Null
             }
             Invoke-WebRequest -Uri "$subtitle_url" -OutFile "$subtitle_season/$subtitle_id.$subtitle_lang.vtt"
         }
