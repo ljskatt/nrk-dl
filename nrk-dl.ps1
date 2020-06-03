@@ -71,8 +71,6 @@ if ($type -eq "series"){
     $subtitles = @()
     foreach ($season in $seasons) {
         $episodes_req = Invoke-RestMethod "https://psapi.nrk.no/tv/catalog/series/$name/seasons/$season"
-        
-
         foreach ($episode_raw in $episodes_req._embedded.episodes) {
             if (!($Drop_video)) {
                 $episodes += New-Object -TypeName "PSObject" -Property @{'url'=$episode_raw._links.share.href;'season'="$season"}
@@ -103,8 +101,6 @@ if ($type -eq "series"){
             }
         }
     }
-
-    
 
     if (!($Drop_video)) {
         $episodes_count = $episodes.Count
