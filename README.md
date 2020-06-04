@@ -14,7 +14,7 @@ Dette vil automatisk bli lastet ned når du kjører scriptet
 
 Last ned filen og kjør kommandoen for å begynne å laste ned episoden/episoder, scriptet vil selv laste ned youtube-dl.exe filen som den trenger.
 
-`./nrk-dl.ps1 "<program>"`
+`./nrk-dl.ps1 [-Name] <program> [-DropSubtitles] [-DropVideo]`
 
 ### Eksempel
 

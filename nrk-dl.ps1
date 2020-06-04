@@ -5,11 +5,11 @@ param (
 
     [Parameter()]
     [switch]
-    $Drop_subtitles,
+    $DropSubtitles,
 
     [Parameter()]
     [switch]
-    $Drop_video
+    $DropVideo
 )
 
 $ProgressPreference = 'SilentlyContinue'
@@ -72,11 +72,11 @@ if ($type -eq "series"){
     foreach ($season in $seasons) {
         $episodes_req = Invoke-RestMethod "https://psapi.nrk.no/tv/catalog/series/$name/seasons/$season"
         foreach ($episode_raw in $episodes_req._embedded.episodes) {
-            if (!($Drop_video)) {
+            if (!($DropVideo)) {
                 $episodes += New-Object -TypeName "PSObject" -Property @{'url'=$episode_raw._links.share.href;'season'="$season"}
             }
 
-            if (!($Drop_subtitles)) {
+            if (!($DropSubtitles)) {
                 $episode_id = $episode_raw.prfId
                 $subs = $null
                 $subs = (invoke-restmethod "https://psapi.nrk.no/playback/manifest/program/$episode_id").playable.subtitles
@@ -87,11 +87,11 @@ if ($type -eq "series"){
         }
 
         foreach ($episode_raw in $episodes_req._embedded.instalments) {
-            if (!($Drop_video)) {
+            if (!($DropVideo)) {
                 $episodes += New-Object -TypeName "PSObject" -Property @{'url'=$episode_raw._links.share.href;'season'="$season"}
             }
 
-            if (!($Drop_subtitles)) {
+            if (!($DropSubtitles)) {
                 $episode_id = $episode_raw.prfId
                 $subs = $null
                 $subs = (invoke-restmethod "https://psapi.nrk.no/playback/manifest/program/$episode_id").playable.subtitles
@@ -102,7 +102,7 @@ if ($type -eq "series"){
         }
     }
 
-    if (!($Drop_video)) {
+    if (!($DropVideo)) {
         $episodes_count = $episodes.Count
         $download_count = 0
         foreach ($episode in $episodes) {
@@ -117,7 +117,7 @@ if ($type -eq "series"){
             Set-Location -Path "$root_location/downloads/$name"
         }
     }
-    if (!($Drop_subtitles)) {
+    if (!($DropSubtitles)) {
         Write-Output "" ""
         $subtitles_count = $subtitles.Count
         $sub_dl_count = 0
