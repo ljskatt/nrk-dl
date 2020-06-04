@@ -9,7 +9,11 @@ param (
 
     [Parameter()]
     [switch]
-    $DropVideo
+    $DropVideo,
+
+    [Parameter()]
+    [switch]
+    $DropImages
 )
 
 $ProgressPreference = 'SilentlyContinue'
@@ -69,6 +73,7 @@ if ($type -eq "standalone"){
 if ($type -eq "series"){
     $episodes = @()
     $subtitles = @()
+    $images = @()
     foreach ($season in $seasons) {
         $episodes_req = Invoke-RestMethod "https://psapi.nrk.no/tv/catalog/series/$name/seasons/$season"
         foreach ($episode_raw in $episodes_req._embedded.episodes) {
@@ -76,12 +81,20 @@ if ($type -eq "series"){
                 $episodes += New-Object -TypeName "PSObject" -Property @{'url'=$episode_raw._links.share.href;'season'="$season"}
             }
 
+            $episode_id = $episode_raw.prfId
+
             if (!($DropSubtitles)) {
-                $episode_id = $episode_raw.prfId
                 $subs = $null
                 $subs = (invoke-restmethod "https://psapi.nrk.no/playback/manifest/program/$episode_id").playable.subtitles
                 foreach ($sub in $subs) {
                     $subtitles += New-Object -TypeName "PSObject" -Property @{'id'=$episode_id;'language'=$sub.language;'url'=$sub.webVtt;'season'="$season"}
+                }
+            }
+            if (!($DropImages)) {
+                $episode_image = $null
+                $episode_image = ($episode_raw.image | Sort-Object -Property width -Descending).url[0]
+                if ($episode_image){
+                    $images += New-Object -TypeName "PSObject" -Property @{'id'=$episode_id;'url'=$episode_image;'season'="$season"}
                 }
             }
         }
@@ -91,12 +104,20 @@ if ($type -eq "series"){
                 $episodes += New-Object -TypeName "PSObject" -Property @{'url'=$episode_raw._links.share.href;'season'="$season"}
             }
 
+            $episode_id = $episode_raw.prfId
+
             if (!($DropSubtitles)) {
-                $episode_id = $episode_raw.prfId
                 $subs = $null
                 $subs = (invoke-restmethod "https://psapi.nrk.no/playback/manifest/program/$episode_id").playable.subtitles
                 foreach ($sub in $subs) {
                     $subtitles += New-Object -TypeName "PSObject" -Property @{'id'=$episode_id;'language'=$sub.language;'url'=$sub.webVtt;'season'="$season"}
+                }
+            }
+            if (!($DropImages)) {
+                $episode_image = $null
+                $episode_image = ($episode_raw.image | Sort-Object -Property width -Descending).url[0]
+                if ($episode_image){
+                    $images += New-Object -TypeName "PSObject" -Property @{'id'=$episode_id;'url'=$episode_image;'season'="$season"}
                 }
             }
         }
@@ -132,6 +153,22 @@ if ($type -eq "series"){
                 New-Item -ItemType "Directory" -Path "$subtitle_season" | Out-Null
             }
             Invoke-WebRequest -Uri "$subtitle_url" -OutFile "$subtitle_season/$subtitle_id.$subtitle_lang.vtt"
+        }
+    }
+    if (!($DropImages)) {
+        Write-Output "" ""
+        $images_count = $images.Count
+        $img_dl_count = 0
+        foreach ($image in $images) {
+            $img_dl_count = $img_dl_count + 1
+            Write-Output "Downloading image ($img_dl_count/$images_count)"
+            $image_id = $image.id
+            $image_season = $image.season
+            $image_url = $image.url
+            if (!(Test-Path -PathType "Container" -Path "$image_season")){
+                New-Item -ItemType "Directory" -Path "$image_season" | Out-Null
+            }
+            Invoke-WebRequest -Uri "$image_url" -OutFile "$image_season/$image_id.jpg"
         }
     }
 }
