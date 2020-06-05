@@ -16,6 +16,29 @@ param (
     $DropImages
 )
 
+function Get-Episodeinfo {
+    if (!($DropVideo)) {
+        $global:episodes += New-Object -TypeName "PSObject" -Property @{'url'=$episode_raw._links.share.href;'season'="$season"}
+    }
+
+    $episode_id = $episode_raw.prfId
+
+    if (!($DropSubtitles)) {
+        $subs = $null
+        $subs = (invoke-restmethod "https://psapi.nrk.no/playback/manifest/program/$episode_id").playable.subtitles
+        foreach ($sub in $subs) {
+            $global:subtitles += New-Object -TypeName "PSObject" -Property @{'id'=$episode_id;'language'=$sub.language;'url'=$sub.webVtt;'season'="$season"}
+        }
+    }
+    if (!($DropImages)) {
+        $episode_image = $null
+        $episode_image = ($episode_raw.image | Sort-Object -Property width -Descending).url[0]
+        if ($episode_image){
+            $global:images += New-Object -TypeName "PSObject" -Property @{'id'=$episode_id;'url'=$episode_image;'season'="$season"}
+        }
+    }
+}
+
 $ProgressPreference = 'SilentlyContinue'
 $root_location = Get-Location
 
@@ -37,7 +60,7 @@ if (!(Test-Path -PathType "Container" -Path "downloads")) {
         Write-Output "Opprettet downloads mappe"
     }
     else {
-        Write-Output "Kunne ikke opprette downloads mappe"
+        Write-Warning "Kunne ikke opprette downloads mappe"
         exit
     }   
 }
@@ -58,7 +81,7 @@ if ($seasons){
             $series_img_url = ($series_req.news.image | Sort-Object -Property width -Descending).url[0]
         }
         else {
-            Write-Alert "Could not find seires image"
+            Write-Warning "Kunne ikke finne serie-bilde"
         }
     }
     $type = "series"
@@ -69,7 +92,7 @@ else {
         $type = "standalone"
     }
     else {
-        Write-Output "Kunne ikke finne program/serie"
+        Write-Warning "Kunne ikke finne program/serie"
         exit
     }
 }
@@ -80,7 +103,7 @@ if (!(Test-Path -PathType "Container" -Path "downloads/$name")) {
         Write-Output "Opprettet $name mappe"
     }
     else {
-        Write-Output "Kunne ikke opprette $name mappe"
+        Write-Warning "Kunne ikke opprette $name mappe"
         exit
     }
 }
@@ -92,10 +115,10 @@ if ($type -eq "standalone"){
 }
 
 if ($type -eq "series"){
-    $episodes = @()
-    $subtitles = @()
+    $global:episodes = @()
+    $global:subtitles = @()
     if (!($DropImages)) {
-        $images = @()
+        $global:images = @()
         if ($series_img_url){
             Invoke-WebRequest -Uri "$series_img_url" -OutFile "show.jpg"
         }
@@ -103,51 +126,17 @@ if ($type -eq "series"){
     foreach ($season in $seasons) {
         $episodes_req = Invoke-RestMethod "https://psapi.nrk.no/tv/catalog/series/$name/seasons/$season"
         foreach ($episode_raw in $episodes_req._embedded.episodes) {
-            if (!($DropVideo)) {
-                $episodes += New-Object -TypeName "PSObject" -Property @{'url'=$episode_raw._links.share.href;'season'="$season"}
-            }
-
-            $episode_id = $episode_raw.prfId
-
-            if (!($DropSubtitles)) {
-                $subs = $null
-                $subs = (invoke-restmethod "https://psapi.nrk.no/playback/manifest/program/$episode_id").playable.subtitles
-                foreach ($sub in $subs) {
-                    $subtitles += New-Object -TypeName "PSObject" -Property @{'id'=$episode_id;'language'=$sub.language;'url'=$sub.webVtt;'season'="$season"}
-                }
-            }
-            if (!($DropImages)) {
-                $episode_image = $null
-                $episode_image = ($episode_raw.image | Sort-Object -Property width -Descending).url[0]
-                if ($episode_image){
-                    $images += New-Object -TypeName "PSObject" -Property @{'id'=$episode_id;'url'=$episode_image;'season'="$season"}
-                }
-            }
+            Get-Episodeinfo
         }
 
         foreach ($episode_raw in $episodes_req._embedded.instalments) {
-            if (!($DropVideo)) {
-                $episodes += New-Object -TypeName "PSObject" -Property @{'url'=$episode_raw._links.share.href;'season'="$season"}
-            }
-
-            $episode_id = $episode_raw.prfId
-
-            if (!($DropSubtitles)) {
-                $subs = $null
-                $subs = (invoke-restmethod "https://psapi.nrk.no/playback/manifest/program/$episode_id").playable.subtitles
-                foreach ($sub in $subs) {
-                    $subtitles += New-Object -TypeName "PSObject" -Property @{'id'=$episode_id;'language'=$sub.language;'url'=$sub.webVtt;'season'="$season"}
-                }
-            }
-            if (!($DropImages)) {
-                $episode_image = $null
-                $episode_image = ($episode_raw.image | Sort-Object -Property width -Descending).url[0]
-                if ($episode_image){
-                    $images += New-Object -TypeName "PSObject" -Property @{'id'=$episode_id;'url'=$episode_image;'season'="$season"}
-                }
-            }
+            Get-Episodeinfo
         }
     }
+
+    $episodes = $global:episodes
+    $subtitles = $global:subtitles
+    $images = $global:images
 
     if (!($DropVideo)) {
         $episodes_count = $episodes.Count
