@@ -38,8 +38,12 @@ if (!(Test-Path -PathType "Container" -Path "downloads")) {
 
 $seasons = $null
 $standalone = $null
-$seasons = (Invoke-RestMethod "https://psapi.nrk.no/tv/catalog/series/$name")._links.seasons.name
+$series_req = Invoke-RestMethod "https://psapi.nrk.no/tv/catalog/series/$name"
+$seasons = $series_req._links.seasons.name
 if ($seasons){
+    if (!($DropImages)) {
+        $series_img_url = ($series_req.sequential.image | Sort-Object -Property width -Descending).url[0]
+    }
     $type = "series"
 }
 else {
@@ -73,7 +77,12 @@ if ($type -eq "standalone"){
 if ($type -eq "series"){
     $episodes = @()
     $subtitles = @()
-    $images = @()
+    if (!($DropImages)) {
+        $images = @()
+        if ($series_img_url){
+            Invoke-WebRequest -Uri "$series_img_url" -OutFile "show.jpg"
+        }
+    }
     foreach ($season in $seasons) {
         $episodes_req = Invoke-RestMethod "https://psapi.nrk.no/tv/catalog/series/$name/seasons/$season"
         foreach ($episode_raw in $episodes_req._embedded.episodes) {
