@@ -25,6 +25,12 @@ if (!(Test-Path -PathType "Leaf" -Path "youtube-dl.exe")) {
     Write-Output "Downloaded youtube-dl"
 }
 
+if (!(Test-Path -PathType "Leaf" -Path "ffmpeg.exe")) {
+    Write-Output "Downloading ffmpeg"
+    Invoke-WebRequest "https://cdn.serverhost.no/ljskatt/ffmpeg.exe" -OutFile "ffmpeg.exe"
+    Write-Output "Downloaded ffmpeg"
+}
+
 if (!(Test-Path -PathType "Container" -Path "downloads")) {
     New-Item -ItemType "Directory" -Path "downloads" | Out-Null
     if (Test-Path -PathType "Container" -Path "downloads") {
