@@ -146,8 +146,8 @@ if ($type -eq "series"){
                 New-Item -ItemType "Directory" -Path $episode.season | Out-Null
             }
             Set-Location -Path $episode.season
-            $download_count = $download_count + 1
-            Write-Output "" "" "" "Downloading ($download_count/$episodes_count)"
+            $download_count += 1
+            Write-Output "" "" "Downloading ($download_count/$episodes_count)"
             $episode.url = $episode.url -replace '{&autoplay,t}', ''
             & "$root_location\youtube-dl.exe" $episode.url
             Set-Location -Path "$root_location/downloads/$name"
@@ -158,7 +158,7 @@ if ($type -eq "series"){
         $subtitles_count = $subtitles.Count
         $sub_dl_count = 0
         foreach ($subtitle in $subtitles) {
-            $sub_dl_count = $sub_dl_count + 1
+            $sub_dl_count += 1
             Write-Output "Downloading subtitle ($sub_dl_count/$subtitles_count)"
             $subtitle_id = $subtitle.id
             $subtitle_lang = $subtitle.language
@@ -175,7 +175,7 @@ if ($type -eq "series"){
         $images_count = $images.Count
         $img_dl_count = 0
         foreach ($image in $images) {
-            $img_dl_count = $img_dl_count + 1
+            $img_dl_count += 1
             Write-Output "Downloading image ($img_dl_count/$images_count)"
             $image_id = $image.id
             $image_season = $image.season
