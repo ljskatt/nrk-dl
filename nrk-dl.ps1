@@ -48,7 +48,18 @@ $series_req = Invoke-RestMethod "https://psapi.nrk.no/tv/catalog/series/$name"
 $seasons = $series_req._links.seasons.name
 if ($seasons){
     if (!($DropImages)) {
-        $series_img_url = ($series_req.sequential.image | Sort-Object -Property width -Descending).url[0]
+        if ($series_req.sequential.image){
+            $series_img_url = ($series_req.sequential.image | Sort-Object -Property width -Descending).url[0]
+        }
+        elseif ($series_req.standard.image) {
+            $series_img_url = ($series_req.standard.image | Sort-Object -Property width -Descending).url[0]
+        }
+        elseif ($series_req.news.image) {
+            $series_img_url = ($series_req.news.image | Sort-Object -Property width -Descending).url[0]
+        }
+        else {
+            Write-Alert "Could not find seires image"
+        }
     }
     $type = "series"
 }
