@@ -13,28 +13,38 @@ param (
 
     [Parameter()]
     [switch]
-    $DropImages
+    $DropImages,
+
+    [Parameter()]
+    [switch]
+    $LegacySequentialFormatting
 )
 
 function Get-Episodeinfo {
-    if (!($DropVideo)) {
-        $global:episodes += New-Object -TypeName "PSObject" -Property @{'url'=$episode_raw._links.share.href;'season'="$season"}
+    $episode_id = $episode_raw.prfId
+    $season_filename = "{0:d2}" -f ([int]$season)
+    $season_dirname = "Season " + "$season_filename"
+    if ($episode_raw.sequenceNumber) {
+        $seq_num = "{0:d2}" -f ($episode_raw.sequenceNumber)
     }
 
-    $episode_id = $episode_raw.prfId
+    if (!($DropVideo)) {
+        $global:episodes += New-Object -TypeName "PSObject" -Property @{'url'=$episode_raw._links.share.href;'seasonfn'="$season_filename";'seasondn'="$season_dirname";'seq_num'="$seq_num"}
+    }
 
     if (!($DropSubtitles)) {
         $subs = $null
         $subs = (invoke-restmethod "https://psapi.nrk.no/playback/manifest/program/$episode_id").playable.subtitles
         foreach ($sub in $subs) {
-            $global:subtitles += New-Object -TypeName "PSObject" -Property @{'id'=$episode_id;'language'=$sub.language;'url'=$sub.webVtt;'season'="$season"}
+            $global:subtitles += New-Object -TypeName "PSObject" -Property @{'id'=$episode_id;'language'=$sub.language;'url'=$sub.webVtt;'seasonfn'="$season_filename";'seasondn'="$season_dirname";'seq_num'="$seq_num"}
         }
     }
+
     if (!($DropImages)) {
         $episode_image = $null
         $episode_image = ($episode_raw.image | Sort-Object -Property width -Descending).url[0]
         if ($episode_image){
-            $global:images += New-Object -TypeName "PSObject" -Property @{'id'=$episode_id;'url'=$episode_image;'season'="$season"}
+            $global:images += New-Object -TypeName "PSObject" -Property @{'id'=$episode_id;'url'=$episode_image;'seasonfn'="$season_filename";'seasondn'="$season_dirname";'seq_num'="$seq_num"}
         }
     }
 }
@@ -85,6 +95,18 @@ if ($seasons){
         }
     }
     $type = "series"
+    $seriestype = $series_req.seriesType
+
+    if ($seriestype -eq "sequential") {
+        $seriestitle = $series_req.sequential.titles.title
+        $seriestitle = $seriestitle -replace "\?"
+        $seriestitle = $seriestitle -replace ":"
+        $seriestitle = $seriestitle -replace [char]0x0021 # !
+        $seriestitle = $seriestitle -replace [char]0x0022 # "
+        $seriestitle = $seriestitle -replace "\*"
+        $seriestitle = $seriestitle -replace "/"
+        $seriestitle = $seriestitle -replace '\\'
+    }
 }
 else {
     $standalone = (Invoke-RestMethod "https://psapi.nrk.no/tv/catalog/programs/$name")._links.share.href
@@ -142,15 +164,21 @@ if ($type -eq "series"){
         $episodes_count = $episodes.Count
         $download_count = 0
         foreach ($episode in $episodes) {
-            if (!(Test-Path -PathType "Container" -Path $episode.season)){
-                New-Item -ItemType "Directory" -Path $episode.season | Out-Null
-            }
-            Set-Location -Path $episode.season
             $download_count += 1
+            if (!(Test-Path -PathType "Container" -Path ($episode.seasondn))) {
+                New-Item -ItemType "Directory" -Path ($episode.seasondn) | Out-Null
+            }
             Write-Output "" "" "Downloading ($download_count/$episodes_count)"
             $episode.url = $episode.url -replace '{&autoplay,t}', ''
-            & "$root_location\youtube-dl.exe" $episode.url
-            Set-Location -Path "$root_location/downloads/$name"
+
+            if (($seriestype -eq "sequential") -and (!($LegacySequentialFormatting))) {
+                & "$root_location\youtube-dl.exe" ($episode.url) -o ($episode.seasondn + "/$seriestitle - s" + $episode.seasonfn + "e" + $episode.seq_num + ".mp4")
+            }
+            else {
+                Set-Location -Path ($episode.seasondn)
+                & "$root_location\youtube-dl.exe" ($episode.url)
+                Set-Location -Path "$root_location/downloads/$name"
+            }
         }
     }
     if (!($DropSubtitles)) {
@@ -160,14 +188,16 @@ if ($type -eq "series"){
         foreach ($subtitle in $subtitles) {
             $sub_dl_count += 1
             Write-Output "Downloading subtitle ($sub_dl_count/$subtitles_count)"
-            $subtitle_id = $subtitle.id
-            $subtitle_lang = $subtitle.language
-            $subtitle_season = $subtitle.season
-            $subtitle_url = $subtitle.url
-            if (!(Test-Path -PathType "Container" -Path "$subtitle_season")){
-                New-Item -ItemType "Directory" -Path "$subtitle_season" | Out-Null
+            if (!(Test-Path -PathType "Container" -Path ($subtitle.seasondn))){
+                New-Item -ItemType "Directory" -Path ($subtitle.seasondn) | Out-Null
             }
-            Invoke-WebRequest -Uri "$subtitle_url" -OutFile "$subtitle_season/$subtitle_id.$subtitle_lang.vtt"
+
+            if (($seriestype -eq "sequential") -and (!($LegacySequentialFormatting))) {
+                Invoke-WebRequest -Uri ($subtitle.url) -OutFile ($subtitle.seasondn + "/$seriestitle - s" + $subtitle.seasonfn + "e" + $subtitle.seq_num + "." + $subtitle.language + ".vtt")
+            }
+            else {
+                Invoke-WebRequest -Uri ($subtitle.url) -OutFile ($subtitle.seasondn + "/" + $subtitle.id + "." + $subtitle.language + ".vtt")
+            }
         }
     }
     if (!($DropImages)) {
@@ -177,13 +207,16 @@ if ($type -eq "series"){
         foreach ($image in $images) {
             $img_dl_count += 1
             Write-Output "Downloading image ($img_dl_count/$images_count)"
-            $image_id = $image.id
-            $image_season = $image.season
-            $image_url = $image.url
-            if (!(Test-Path -PathType "Container" -Path "$image_season")){
-                New-Item -ItemType "Directory" -Path "$image_season" | Out-Null
+            if (!(Test-Path -PathType "Container" -Path ($image.seasondn))){
+                New-Item -ItemType "Directory" -Path ($image.seasondn) | Out-Null
             }
-            Invoke-WebRequest -Uri "$image_url" -OutFile "$image_season/$image_id.jpg"
+
+            if (($seriestype -eq "sequential") -and (!($LegacySequentialFormatting))) {
+                Invoke-WebRequest -Uri ($image.url) -OutFile ($image.seasondn + "/$seriestitle - s" + $image.seasonfn + "e" + $image.seq_num + ".jpg")
+            }
+            else {
+                Invoke-WebRequest -Uri ($image.url) -OutFile ($image.seasondn + "/" + $image.id + ".jpg")
+            }
         }
     }
 }
