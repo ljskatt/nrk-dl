@@ -109,7 +109,8 @@ if ($seasons){
     }
 }
 else {
-    $standalone = (Invoke-RestMethod "https://psapi.nrk.no/tv/catalog/programs/$name")._links.share.href
+    $standalone_req = (Invoke-RestMethod "https://psapi.nrk.no/tv/catalog/programs/$name")
+    $standalone = $standalone_req._links.share.href
     if ($standalone){
         $type = "standalone"
     }
@@ -132,8 +133,19 @@ if (!(Test-Path -PathType "Container" -Path "downloads/$name")) {
 Set-Location -Path "downloads/$name"
 
 if ($type -eq "standalone"){
-    $standalone = $standalone -replace '{&autoplay,t}', ''
-    & "$root_location\youtube-dl.exe" "$standalone"
+    if (!($DropVideo)) {
+        $standalone = $standalone -replace '{&autoplay,t}', ''
+        & "$root_location\youtube-dl.exe" "$standalone"
+    }
+    if (($DropSubtitles)) {
+        $subtitles = (Invoke-RestMethod "https://psapi.nrk.no/playback/manifest/program/$name").playable.subtitles
+        foreach ($subtitle in $subtitles) {
+            Invoke-WebRequest ($subtitle.webVtt) -OutFile ("$name" + "." + $subtitle.language + ".vtt")
+        }
+    }
+    if (($DropImages)) {
+        Invoke-WebRequest -Uri (($standalone_req.programInformation.image | Sort-Object -Property width -Descending).url[0]) -OutFile "show.jpg"
+    }
 }
 
 if ($type -eq "series"){
