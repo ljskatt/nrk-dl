@@ -111,7 +111,7 @@ if ($seasons){
 else {
     $standalone_req = (Invoke-RestMethod "https://psapi.nrk.no/tv/catalog/programs/$name")
     $standalone = $standalone_req._links.share.href
-    if ($standalone){
+    if ($standalone_req){
         $type = "standalone"
     }
     else {
@@ -134,17 +134,22 @@ Set-Location -Path "downloads/$name"
 
 if ($type -eq "standalone"){
     if (!($DropVideo)) {
+
         $standalone = $standalone -replace '{&autoplay,t}', ''
         & "$root_location\youtube-dl.exe" "$standalone"
     }
-    if (($DropSubtitles)) {
+    if (!($DropSubtitles)) {
         $subtitles = (Invoke-RestMethod "https://psapi.nrk.no/playback/manifest/program/$name").playable.subtitles
+        Write-Output "Subtitles: Downloading"
         foreach ($subtitle in $subtitles) {
             Invoke-WebRequest ($subtitle.webVtt) -OutFile ("$name" + "." + $subtitle.language + ".vtt")
         }
+        Write-Output "Subtitles: Done"
     }
-    if (($DropImages)) {
+    if (!($DropImages)) {
+        Write-Output "Images: Downloading"
         Invoke-WebRequest -Uri (($standalone_req.programInformation.image | Sort-Object -Property width -Descending).url[0]) -OutFile "show.jpg"
+        Write-Output "Images: Done"
     }
 }
 
