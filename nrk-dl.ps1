@@ -35,8 +35,11 @@ function Get-Episodeinfo {
     if (!($DropSubtitles)) {
         $subs = $null
         $subs = (invoke-restmethod "https://psapi.nrk.no/playback/manifest/program/$episode_id").playable.subtitles
+        if ($subs.Count -gt 1) {
+            Write-Warning ("$episode_id har mer enn 1 subtitle (" + $subs.Count + " subtitles), gjerne dobbelsjekk subtitles")
+        }
         foreach ($sub in $subs) {
-            $global:subtitles += New-Object -TypeName "PSObject" -Property @{'id'=$episode_id;'language'=$sub.language;'url'=$sub.webVtt;'seasonfn'="$season_filename";'seasondn'="$season_dirname";'seq_num'="$seq_num"}
+            $global:subtitles += New-Object -TypeName "PSObject" -Property @{'id'=$episode_id;'language'=$sub.language;'forced'=$sub.defaultOn;'url'=$sub.webVtt;'seasonfn'="$season_filename";'seasondn'="$season_dirname";'seq_num'="$seq_num"}
         }
     }
 
@@ -90,6 +93,9 @@ if ($seasons){
         elseif ($series_req.news.image) {
             $series_img_url = ($series_req.news.image | Sort-Object -Property width -Descending).url[0]
         }
+        elseif ($series_req._embedded.seasons.image) {
+            $series_img_url = ($series_req._embedded.seasons.image | Sort-Object -Property width -Descending).url[0]
+        }
         else {
             Write-Warning "Kunne ikke finne serie-bilde"
         }
@@ -103,6 +109,9 @@ if ($seasons){
         elseif ($series_req.news.backdropImage) {
             $series_backdrop_url = ($series_req.news.backdropImage | Sort-Object -Property width -Descending).url[0]
         }
+        elseif ($series_req._embedded.seasons.backdropImage) {
+            $series_backdrop_url = ($series_req._embedded.seasons.backdropImage | Sort-Object -Property width -Descending).url[0]
+        }
         else {
             Write-Warning "Kunne ikke finne serie-backdrop"
         }
@@ -115,6 +124,9 @@ if ($seasons){
         }
         elseif ($series_req.news.posterImage) {
             $series_poster_url = ($series_req.news.posterImage | Sort-Object -Property width -Descending).url[0]
+        }
+        elseif ($series_req._embedded.seasons.posterImage) {
+            $series_poster_url = ($series_req._embedded.seasons.posterImage | Sort-Object -Property width -Descending).url[0]
         }
         else {
             Write-Warning "Kunne ikke finne serie-poster"
@@ -160,21 +172,38 @@ Set-Location -Path "downloads/$name"
 
 if ($type -eq "standalone"){
     if (!($DropVideo)) {
-
         $standalone = $standalone -replace '{&autoplay,t}', ''
         & "$root_location\youtube-dl.exe" "$standalone"
     }
     if (!($DropSubtitles)) {
         $subtitles = (Invoke-RestMethod "https://psapi.nrk.no/playback/manifest/program/$name").playable.subtitles
         Write-Output "Subtitles: Downloading"
+        if ($subtitles.Count -gt 1) {
+            Write-Warning ("$name har mer enn 1 subtitle (" + $subtitles.Count + " subtitles), gjerne dobbelsjekk subtitles")
+        }
         foreach ($subtitle in $subtitles) {
-            Invoke-WebRequest ($subtitle.webVtt) -OutFile ("$name" + "." + $subtitle.language + ".vtt")
+            Write-Warning ($subtitle.defaultOn)
+            if ($subtitle.defaultOn -eq $true) {
+                $sub_forced = ".forced"
+            }
+            else {
+                $sub_forced = ""
+            }
+            Invoke-WebRequest ($subtitle.webVtt) -OutFile ("$name" + "." + $subtitle.language + "$sub_forced.vtt")
         }
         Write-Output "Subtitles: Done"
     }
     if (!($DropImages)) {
         Write-Output "Images: Downloading"
-        Invoke-WebRequest -Uri (($standalone_req.programInformation.image | Sort-Object -Property width -Descending).url[0]) -OutFile "show.jpg"
+        if ($standalone_req.programInformation.image) {
+            Invoke-WebRequest -Uri (($standalone_req.programInformation.image | Sort-Object -Property width -Descending).url[0]) -OutFile "banner.jpg"
+        }
+        if ($standalone_req.programInformation.backdropImage) {
+            Invoke-WebRequest -Uri (($standalone_req.programInformation.backdropImage | Sort-Object -Property width -Descending).url[0]) -OutFile "background.jpg"
+        }
+        if ($standalone_req.programInformation.posterImage) {
+            Invoke-WebRequest -Uri (($standalone_req.programInformation.posterImage | Sort-Object -Property width -Descending).url[0]) -OutFile "poster.jpg"
+        }
         Write-Output "Images: Done"
     }
 }
@@ -237,15 +266,23 @@ if ($type -eq "series"){
         foreach ($subtitle in $subtitles) {
             $sub_dl_count += 1
             Write-Output "Downloading subtitle ($sub_dl_count/$subtitles_count)"
+
+            if ($subtitle.defaultOn -eq $true) {
+                $sub_forced = ".forced"
+            }
+            else {
+                $sub_forced = ""
+            }
+
             if (!(Test-Path -PathType "Container" -Path ($subtitle.seasondn))){
                 New-Item -ItemType "Directory" -Path ($subtitle.seasondn) | Out-Null
             }
 
             if (($seriestype -eq "sequential") -and (!($LegacySequentialFormatting))) {
-                Invoke-WebRequest -Uri ($subtitle.url) -OutFile ($subtitle.seasondn + "/$seriestitle - s" + $subtitle.seasonfn + "e" + $subtitle.seq_num + "." + $subtitle.language + ".vtt")
+                Invoke-WebRequest -Uri ($subtitle.url) -OutFile ($subtitle.seasondn + "/$seriestitle - s" + $subtitle.seasonfn + "e" + $subtitle.seq_num + "." + $subtitle.language + "$sub_forced.vtt")
             }
             else {
-                Invoke-WebRequest -Uri ($subtitle.url) -OutFile ($subtitle.seasondn + "/" + $subtitle.id + "." + $subtitle.language + ".vtt")
+                Invoke-WebRequest -Uri ($subtitle.url) -OutFile ($subtitle.seasondn + "/" + $subtitle.id + "." + $subtitle.language + "$sub_forced.vtt")
             }
         }
     }
