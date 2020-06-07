@@ -185,7 +185,7 @@ if ($type -eq "series"){
     if (!($DropImages)) {
         $global:images = @()
         if ($series_img_url){
-            Invoke-WebRequest -Uri "$series_img_url" -OutFile "image.jpg"
+            Invoke-WebRequest -Uri "$series_img_url" -OutFile "banner.jpg"
         }
         if ($series_backdrop_url){
             Invoke-WebRequest -Uri "$series_backdrop_url" -OutFile "background.jpg"
