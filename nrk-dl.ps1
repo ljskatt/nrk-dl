@@ -93,6 +93,32 @@ if ($seasons){
         else {
             Write-Warning "Kunne ikke finne serie-bilde"
         }
+
+        if ($series_req.sequential.backdropImage){
+            $series_backdrop_url = ($series_req.sequential.backdropImage | Sort-Object -Property width -Descending).url[0]
+        }
+        elseif ($series_req.standard.backdropImage) {
+            $series_backdrop_url = ($series_req.standard.backdropImage | Sort-Object -Property width -Descending).url[0]
+        }
+        elseif ($series_req.news.backdropImage) {
+            $series_backdrop_url = ($series_req.news.backdropImage | Sort-Object -Property width -Descending).url[0]
+        }
+        else {
+            Write-Warning "Kunne ikke finne serie-backdrop"
+        }
+
+        if ($series_req.sequential.posterImage){
+            $series_poster_url = ($series_req.sequential.posterImage | Sort-Object -Property width -Descending).url[0]
+        }
+        elseif ($series_req.standard.posterImage) {
+            $series_poster_url = ($series_req.standard.posterImage | Sort-Object -Property width -Descending).url[0]
+        }
+        elseif ($series_req.news.posterImage) {
+            $series_poster_url = ($series_req.news.posterImage | Sort-Object -Property width -Descending).url[0]
+        }
+        else {
+            Write-Warning "Kunne ikke finne serie-poster"
+        }
     }
     $type = "series"
     $seriestype = $series_req.seriesType
@@ -159,7 +185,13 @@ if ($type -eq "series"){
     if (!($DropImages)) {
         $global:images = @()
         if ($series_img_url){
-            Invoke-WebRequest -Uri "$series_img_url" -OutFile "show.jpg"
+            Invoke-WebRequest -Uri "$series_img_url" -OutFile "image.jpg"
+        }
+        if ($series_backdrop_url){
+            Invoke-WebRequest -Uri "$series_backdrop_url" -OutFile "background.jpg"
+        }
+        if ($series_poster_url){
+            Invoke-WebRequest -Uri "$series_poster_url" -OutFile "poster.jpg"
         }
     }
     foreach ($season in $seasons) {
