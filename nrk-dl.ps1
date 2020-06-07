@@ -182,7 +182,6 @@ if ($type -eq "standalone"){
             Write-Warning ("$name har mer enn 1 subtitle (" + $subtitles.Count + " subtitles), gjerne dobbelsjekk subtitles")
         }
         foreach ($subtitle in $subtitles) {
-            Write-Warning ($subtitle.defaultOn)
             if ($subtitle.defaultOn -eq $true) {
                 $sub_forced = ".forced"
             }
