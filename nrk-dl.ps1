@@ -84,22 +84,6 @@ $series_req = Invoke-RestMethod "https://psapi.nrk.no/tv/catalog/series/$name"
 $seasons = $series_req._links.seasons.name
 if ($seasons){
     if (!($DropImages)) {
-        if ($series_req.sequential.image){
-            $series_img_url = ($series_req.sequential.image | Sort-Object -Property width -Descending).url[0]
-        }
-        elseif ($series_req.standard.image) {
-            $series_img_url = ($series_req.standard.image | Sort-Object -Property width -Descending).url[0]
-        }
-        elseif ($series_req.news.image) {
-            $series_img_url = ($series_req.news.image | Sort-Object -Property width -Descending).url[0]
-        }
-        elseif ($series_req._embedded.seasons.image) {
-            $series_img_url = ($series_req._embedded.seasons.image | Sort-Object -Property width -Descending).url[0]
-        }
-        else {
-            Write-Warning "Kunne ikke finne serie-bilde"
-        }
-
         if ($series_req.sequential.backdropImage){
             $series_backdrop_url = ($series_req.sequential.backdropImage | Sort-Object -Property width -Descending).url[0]
         }
@@ -127,6 +111,18 @@ if ($seasons){
         }
         elseif ($series_req._embedded.seasons.posterImage) {
             $series_poster_url = ($series_req._embedded.seasons.posterImage | Sort-Object -Property width -Descending).url[0]
+        }
+        elseif ($series_req.sequential.image){
+            $series_poster_url = ($series_req.sequential.image | Sort-Object -Property width -Descending).url[0]
+        }
+        elseif ($series_req.standard.image) {
+            $series_poster_url = ($series_req.standard.image | Sort-Object -Property width -Descending).url[0]
+        }
+        elseif ($series_req.news.image) {
+            $series_poster_url = ($series_req.news.image | Sort-Object -Property width -Descending).url[0]
+        }
+        elseif ($series_req._embedded.seasons.image) {
+            $series_poster_url = ($series_req._embedded.seasons.image | Sort-Object -Property width -Descending).url[0]
         }
         else {
             Write-Warning "Kunne ikke finne serie-poster"
@@ -194,14 +190,17 @@ if ($type -eq "standalone"){
     }
     if (!($DropImages)) {
         Write-Output "Images: Downloading"
-        if ($standalone_req.programInformation.image) {
-            Invoke-WebRequest -Uri (($standalone_req.programInformation.image | Sort-Object -Property width -Descending).url[0]) -OutFile "banner.jpg"
-        }
         if ($standalone_req.programInformation.backdropImage) {
             Invoke-WebRequest -Uri (($standalone_req.programInformation.backdropImage | Sort-Object -Property width -Descending).url[0]) -OutFile "background.jpg"
         }
         if ($standalone_req.programInformation.posterImage) {
             Invoke-WebRequest -Uri (($standalone_req.programInformation.posterImage | Sort-Object -Property width -Descending).url[0]) -OutFile "poster.jpg"
+        }
+        elseif ($standalone_req.programInformation.image) {
+            Invoke-WebRequest -Uri (($standalone_req.programInformation.image | Sort-Object -Property width -Descending).url[0]) -OutFile "poster.jpg"
+        }
+        else {
+            Write-Warning "Could not find poster"
         }
         Write-Output "Images: Done"
     }
@@ -212,9 +211,6 @@ if ($type -eq "series"){
     $global:subtitles = @()
     if (!($DropImages)) {
         $global:images = @()
-        if ($series_img_url){
-            Invoke-WebRequest -Uri "$series_img_url" -OutFile "banner.jpg"
-        }
         if ($series_backdrop_url){
             Invoke-WebRequest -Uri "$series_backdrop_url" -OutFile "background.jpg"
         }
