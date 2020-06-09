@@ -100,44 +100,44 @@ $series_req = Invoke-RestMethod "https://psapi.nrk.no/tv/catalog/series/$name"
 $seasons = $series_req._links.seasons.name
 if ($seasons){
     if (!($DropImages)) {
-        if ($series_req.sequential.backdropImage){
+        if ($series_req.sequential.backdropImage -ne $null){
             $series_backdrop_url = ($series_req.sequential.backdropImage | Sort-Object -Property width -Descending).url[0]
         }
-        elseif ($series_req.standard.backdropImage) {
+        elseif ($series_req.standard.backdropImage -ne $null) {
             $series_backdrop_url = ($series_req.standard.backdropImage | Sort-Object -Property width -Descending).url[0]
         }
-        elseif ($series_req.news.backdropImage) {
+        elseif ($series_req.news.backdropImage -ne $null) {
             $series_backdrop_url = ($series_req.news.backdropImage | Sort-Object -Property width -Descending).url[0]
         }
-        elseif ($series_req._embedded.seasons.backdropImage) {
+        elseif ($series_req._embedded.seasons.backdropImage -ne $null) {
             $series_backdrop_url = ($series_req._embedded.seasons.backdropImage | Sort-Object -Property width -Descending).url[0]
         }
         else {
             Write-Warning "Kunne ikke finne serie-backdrop"
         }
 
-        if ($series_req.sequential.posterImage){
+        if ($series_req.sequential.posterImage -ne $null){
             $series_poster_url = ($series_req.sequential.posterImage | Sort-Object -Property width -Descending).url[0]
         }
-        elseif ($series_req.standard.posterImage) {
+        elseif ($series_req.standard.posterImage -ne $null) {
             $series_poster_url = ($series_req.standard.posterImage | Sort-Object -Property width -Descending).url[0]
         }
-        elseif ($series_req.news.posterImage) {
+        elseif ($series_req.news.posterImage -ne $null) {
             $series_poster_url = ($series_req.news.posterImage | Sort-Object -Property width -Descending).url[0]
         }
-        elseif ($series_req._embedded.seasons.posterImage) {
+        elseif ($series_req._embedded.seasons.posterImage -ne $null) {
             $series_poster_url = ($series_req._embedded.seasons.posterImage | Sort-Object -Property width -Descending).url[0]
         }
-        elseif ($series_req.sequential.image){
+        elseif ($series_req.sequential.image -ne $null){
             $series_poster_url = ($series_req.sequential.image | Sort-Object -Property width -Descending).url[0]
         }
-        elseif ($series_req.standard.image) {
+        elseif ($series_req.standard.image -ne $null) {
             $series_poster_url = ($series_req.standard.image | Sort-Object -Property width -Descending).url[0]
         }
-        elseif ($series_req.news.image) {
+        elseif ($series_req.news.image -ne $null) {
             $series_poster_url = ($series_req.news.image | Sort-Object -Property width -Descending).url[0]
         }
-        elseif ($series_req._embedded.seasons.image) {
+        elseif ($series_req._embedded.seasons.image -ne $null) {
             $series_poster_url = ($series_req._embedded.seasons.image | Sort-Object -Property width -Descending).url[0]
         }
         else {
@@ -165,6 +165,42 @@ else {
         exit
     }
 }
+
+Write-Output "" "" "$name (Type: $type)" ""
+Write-Host "Video:             " -NoNewline
+if ($DropVideo) {
+    Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " OFF "
+}
+else {
+    Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " ON "
+}
+
+Write-Host "Images:            " -NoNewline
+if ($DropImages) {
+    Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " OFF "
+}
+else {
+    Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " ON "
+}
+
+Write-Host "Subtitles:         " -NoNewline
+if ($DropSubtitles) {
+    Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " OFF "
+}
+else {
+    Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " ON "
+}
+
+Write-Host "Legacy Formatting: " -NoNewline
+if ($LegacyFormatting) {
+    Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " ON "
+}
+else {
+    Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " OFF "
+}
+
+Write-Output ""
+Read-Host -Prompt "Press enter to continue, CTRL + C to quit"
 
 if (!(Test-Path -PathType "Container" -Path "downloads/$name")) {
     New-Item -ItemType "Directory" -Path "downloads/$name" | Out-Null
