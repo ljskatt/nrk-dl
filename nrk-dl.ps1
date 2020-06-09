@@ -42,14 +42,15 @@ function Get-Episodeinfo {
     if ($episode_raw.sequenceNumber) {
         $seq_num = "{0:d2}" -f ($episode_raw.sequenceNumber)
     }
+    $episode_manifest = invoke-restmethod "https://psapi.nrk.no/playback/manifest/program/$episode_id"
 
     if (!($DropVideo)) {
-        $global:episodes += New-Object -TypeName "PSObject" -Property @{'url'=$episode_raw._links.share.href;'title'=$episode_title;'date'=$episode_raw.firstTransmissionDateDisplayValue;'seasonfn'="$season_filename";'seasondn'="$season_dirname";'seq_num'="$seq_num"}
+        $global:episodes += New-Object -TypeName "PSObject" -Property @{'id'=$episode_id;'url'=$episode_raw._links.share.href;'url_fallback'=$episode_manifest.playable.assets.url;'title'=$episode_title;'date'=$episode_raw.firstTransmissionDateDisplayValue;'seasonfn'="$season_filename";'seasondn'="$season_dirname";'seq_num'="$seq_num"}
     }
 
     if (!($DropSubtitles)) {
         $subs = $null
-        $subs = (invoke-restmethod "https://psapi.nrk.no/playback/manifest/program/$episode_id").playable.subtitles
+        $subs = $episode_manifest.playable.subtitles
         if ($subs.Count -gt 1) {
             Write-Warning ("$episode_id har mer enn 1 subtitle (" + $subs.Count + " subtitles), gjerne dobbelsjekk subtitles")
         }
@@ -252,7 +253,7 @@ if ($type -eq "series"){
             if (!(Test-Path -PathType "Container" -Path ($episode.seasondn))) {
                 New-Item -ItemType "Directory" -Path ($episode.seasondn) | Out-Null
             }
-            Write-Output "" "" "Downloading ($download_count/$episodes_count)"
+            Write-Output "" "Downloading ($download_count/$episodes_count)"
             $episode.url = $episode.url -replace '{&autoplay,t}', ''
 
             if (($seriestype -eq "sequential") -and (!($LegacyFormatting))) {
@@ -265,7 +266,26 @@ if ($type -eq "series"){
                 $outfile = ($episode.seasondn + "/$name - " + $episode.id + ".mp4")
             }
 
-            & "$root_location\youtube-dl.exe" ($episode.url) -o "$outfile"
+            if (Test-Path -PathType "Leaf" -Path "$outfile") {
+                Write-Output "Episode exists: $outfile"
+            }
+            else {
+                & "$root_location\youtube-dl.exe" -q ($episode.url) -o "$outfile"
+                if (Test-Path -PathType "Leaf" -Path "$outfile") {
+                    Write-Output "Downloaded ($download_count/$episodes_count)"
+                }
+                else {
+                    Write-Warning "Download failed, trying fallback url"
+                    & "$root_location\youtube-dl.exe" -q ($episode.url_fallback) -o "$outfile"
+                    if (Test-Path -PathType "Leaf" -Path "$outfile") {
+                        Write-Output "Downloaded ($download_count/$episodes_count)"
+                    }
+                    else {
+                        Write-Host -BackgroundColor "red" -ForegroundColor "black" -Object ("Nedlasting av " + $episode.id + " feilet")
+                    }
+                }
+            }
+            
         }
     }
     if (!($DropSubtitles)) {
