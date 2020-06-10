@@ -5,11 +5,11 @@ param (
 
     [Parameter()]
     [switch]
-    $DropSubtitles,
+    $DropVideo,
 
     [Parameter()]
     [switch]
-    $DropVideo,
+    $DropSubtitles,
 
     [Parameter()]
     [switch]
@@ -20,50 +20,50 @@ param (
     $LegacyFormatting
 )
 
-function Clean-Name {
-    if ($args[0]){
-        $output = $args[0]
-        $output = $output -replace "\?"
-        $output = $output -replace ":"
-        $output = $output -replace [char]0x0021 # !
-        $output = $output -replace [char]0x0022 # "
-        $output = $output -replace "\*"
-        $output = $output -replace "/"
-        $output = $output -replace '\\'
-        return $output
-    }
+function Format-Name {
+    param (
+        [Parameter(Mandatory)]
+        [string]
+        $Name
+    )
+    $output = $Name
+    $output = $output -replace "\?"
+    $output = $output -replace ":"
+    $output = $output -replace [char]0x0021 # !
+    $output = $output -replace [char]0x0022 # "
+    $output = $output -replace "\*"
+    $output = $output -replace "/"
+    $output = $output -replace '\\'
+    return $output
 }
 
 function Get-Episodeinfo {
-    $episode_id = $episode_raw.prfId
     $season_filename = "{0:d2}" -f ([int]$season)
     $season_dirname = "Season " + "$season_filename"
-    $episode_title = Clean-Name ($episode_raw.titles.title)
+    $episode_title = Format-Name -Name ($episode_raw.titles.title)
     if ($episode_raw.sequenceNumber) {
         $seq_num = "{0:d2}" -f ($episode_raw.sequenceNumber)
     }
-    $episode_manifest = invoke-restmethod "https://psapi.nrk.no/playback/manifest/program/$episode_id"
+    $episode_manifest = Invoke-RestMethod -Uri ("https://psapi.nrk.no/playback/manifest/program/" + $episode_raw.prfId)
 
     if (!($DropVideo)) {
-        $global:episodes += New-Object -TypeName "PSObject" -Property @{'id'=$episode_id;'url'=$episode_raw._links.share.href;'url_fallback'=$episode_manifest.playable.assets.url;'title'=$episode_title;'date'=$episode_raw.firstTransmissionDateDisplayValue;'seasonfn'="$season_filename";'seasondn'="$season_dirname";'seq_num'="$seq_num"}
+        $global:episodes += New-Object -TypeName "PSObject" -Property @{'id'=$episode_raw.prfId;'url'=$episode_raw._links.share.href;'url_fallback'=$episode_manifest.playable.assets.url;'title'=$episode_title;'date'=$episode_raw.firstTransmissionDateDisplayValue;'seasonfn'="$season_filename";'seasondn'="$season_dirname";'seq_num'="$seq_num"}
     }
 
     if (!($DropSubtitles)) {
-        $subs = $null
-        $subs = $episode_manifest.playable.subtitles
-        if ($subs.Count -gt 1) {
-            Write-Warning ("$episode_id har mer enn 1 subtitle (" + $subs.Count + " subtitles), gjerne dobbelsjekk subtitles")
+        if ($episode_manifest.playable.subtitles.Count -gt 1) {
+            Write-Warning ($episode_raw.prfId + " har mer enn 1 subtitle (" + $episode_manifest.playable.subtitles.Count + " subtitles), gjerne dobbelsjekk subtitles")
         }
-        foreach ($sub in $subs) {
-            $global:subtitles += New-Object -TypeName "PSObject" -Property @{'id'=$episode_id;'language'=$sub.language;'forced'=$sub.defaultOn;'url'=$sub.webVtt;'title'=$episode_title;'date'=$episode_raw.firstTransmissionDateDisplayValue;'seasonfn'="$season_filename";'seasondn'="$season_dirname";'seq_num'="$seq_num"}
+        foreach ($sub in $episode_manifest.playable.subtitles) {
+            $global:subtitles += New-Object -TypeName "PSObject" -Property @{'id'=$episode_raw.prfId;'language'=$sub.language;'forced'=$sub.defaultOn;'url'=$sub.webVtt;'title'=$episode_title;'date'=$episode_raw.firstTransmissionDateDisplayValue;'seasonfn'="$season_filename";'seasondn'="$season_dirname";'seq_num'="$seq_num"}
         }
     }
 
     if (!($DropImages)) {
         $episode_image = $null
         $episode_image = ($episode_raw.image | Sort-Object -Property width -Descending).url[0]
-        if ($episode_image){
-            $global:images += New-Object -TypeName "PSObject" -Property @{'id'=$episode_id;'url'=$episode_image;'title'=$episode_title;'date'=$episode_raw.firstTransmissionDateDisplayValue;'seasonfn'="$season_filename";'seasondn'="$season_dirname";'seq_num'="$seq_num"}
+        if ($episode_image) {
+            $global:images += New-Object -TypeName "PSObject" -Property @{'id'=$episode_raw.prfId;'url'=$episode_image;'title'=$episode_title;'date'=$episode_raw.firstTransmissionDateDisplayValue;'seasonfn'="$season_filename";'seasondn'="$season_dirname";'seq_num'="$seq_num"}
         }
     }
 }
@@ -73,13 +73,13 @@ $root_location = Get-Location
 
 if (!(Test-Path -PathType "Leaf" -Path "youtube-dl.exe")) {
     Write-Output "Downloading youtube-dl"
-    Invoke-WebRequest "https://youtube-dl.org/downloads/latest/youtube-dl.exe" -OutFile "youtube-dl.exe"
+    Invoke-WebRequest -Uri "https://youtube-dl.org/downloads/latest/youtube-dl.exe" -OutFile "youtube-dl.exe"
     Write-Output "Downloaded youtube-dl"
 }
 
 if (!(Test-Path -PathType "Leaf" -Path "ffmpeg.exe")) {
     Write-Output "Downloading ffmpeg"
-    Invoke-WebRequest "https://cdn.serverhost.no/ljskatt/ffmpeg.exe" -OutFile "ffmpeg.exe"
+    Invoke-WebRequest -Uri "https://cdn.serverhost.no/ljskatt/ffmpeg.exe" -OutFile "ffmpeg.exe"
     Write-Output "Downloaded ffmpeg"
 }
 
@@ -89,18 +89,18 @@ if (!(Test-Path -PathType "Container" -Path "downloads")) {
         Write-Output "Opprettet downloads mappe"
     }
     else {
-        Write-Warning "Kunne ikke opprette downloads mappe"
+        Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object "Kunne ikke opprette downloads mappe"
         exit
     }   
 }
 
 $seasons = $null
 $standalone = $null
-$series_req = Invoke-RestMethod "https://psapi.nrk.no/tv/catalog/series/$name"
+$series_req = Invoke-RestMethod -Uri "https://psapi.nrk.no/tv/catalog/series/$name"
 $seasons = $series_req._links.seasons.name
-if ($seasons){
+if ($seasons) {
     if (!($DropImages)) {
-        if ($series_req.sequential.backdropImage -ne $null){
+        if ($series_req.sequential.backdropImage -ne $null) {
             $series_backdrop_url = ($series_req.sequential.backdropImage | Sort-Object -Property width -Descending).url[0]
         }
         elseif ($series_req.standard.backdropImage -ne $null) {
@@ -116,7 +116,7 @@ if ($seasons){
             Write-Warning "Kunne ikke finne serie-backdrop"
         }
 
-        if ($series_req.sequential.posterImage -ne $null){
+        if ($series_req.sequential.posterImage -ne $null) {
             $series_poster_url = ($series_req.sequential.posterImage | Sort-Object -Property width -Descending).url[0]
         }
         elseif ($series_req.standard.posterImage -ne $null) {
@@ -141,32 +141,32 @@ if ($seasons){
             $series_poster_url = ($series_req._embedded.seasons.image | Sort-Object -Property width -Descending).url[0]
         }
         else {
-            Write-Warning "Kunne ikke finne serie-poster"
+            Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object "Kunne ikke finne serie-poster"
         }
     }
     $type = "series"
     $seriestype = $series_req.seriesType
 
     if ($series_req.sequential.titles.title) {
-        $seriestitle = Clean-Name ($series_req.sequential.titles.title)
+        $seriestitle = Format-Name -Name ($series_req.sequential.titles.title)
     }
     elseif ($series_req.standard.titles.title) {
-        $seriestitle = Clean-Name ($series_req.standard.titles.title)
+        $seriestitle = Format-Name -Name ($series_req.standard.titles.title)
     }
 }
 else {
-    $standalone_req = (Invoke-RestMethod "https://psapi.nrk.no/tv/catalog/programs/$name")
+    $standalone_req = (Invoke-RestMethod -Uri "https://psapi.nrk.no/tv/catalog/programs/$name")
     $standalone = $standalone_req._links.share.href
-    if ($standalone_req){
+    if ($standalone_req) {
         $type = "standalone"
     }
     else {
-        Write-Warning "Kunne ikke finne program/serie"
+        Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object "Kunne ikke finne program/serie"
         exit
     }
 }
 
-Write-Output "" "" "$name (Type: $type)" ""
+Write-Output "----------" "" "$name (Type: $type)" "Download folder: $root_location\downloads\$name" ""
 Write-Host "Video:             " -NoNewline
 if ($DropVideo) {
     Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " OFF "
@@ -199,12 +199,12 @@ else {
     Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " OFF "
 }
 
-Write-Output ""
+Write-Output "" "----------"
 Read-Host -Prompt "Press enter to continue, CTRL + C to quit"
 
 if (!(Test-Path -PathType "Container" -Path "downloads/$name")) {
     New-Item -ItemType "Directory" -Path "downloads/$name" | Out-Null
-    if (Test-Path -PathType "Container" -Path "downloads/$name"){
+    if (Test-Path -PathType "Container" -Path "downloads/$name") {
         Write-Output "Opprettet $name mappe"
     }
     else {
@@ -214,13 +214,15 @@ if (!(Test-Path -PathType "Container" -Path "downloads/$name")) {
 }
 Set-Location -Path "downloads/$name"
 
-if ($type -eq "standalone"){
+if ($type -eq "standalone") {
     if (!($DropVideo)) {
         $standalone = $standalone -replace '{&autoplay,t}', ''
+        Write-Output "Video: Downloading"
         & "$root_location\youtube-dl.exe" "$standalone"
+        Write-Output "Video: Downloaded"
     }
     if (!($DropSubtitles)) {
-        $subtitles = (Invoke-RestMethod "https://psapi.nrk.no/playback/manifest/program/$name").playable.subtitles
+        $subtitles = (Invoke-RestMethod -Uri "https://psapi.nrk.no/playback/manifest/program/$name").playable.subtitles
         Write-Output "Subtitles: Downloading"
         if ($subtitles.Count -gt 1) {
             Write-Warning ("$name har mer enn 1 subtitle (" + $subtitles.Count + " subtitles), gjerne dobbelsjekk subtitles")
@@ -232,7 +234,7 @@ if ($type -eq "standalone"){
             else {
                 $sub_forced = ""
             }
-            Invoke-WebRequest ($subtitle.webVtt) -OutFile ("$name" + "." + $subtitle.language + "$sub_forced.vtt")
+            Invoke-WebRequest -Uri ($subtitle.webVtt) -OutFile ("$name" + "." + $subtitle.language + "$sub_forced.vtt")
         }
         Write-Output "Subtitles: Done"
     }
@@ -248,26 +250,26 @@ if ($type -eq "standalone"){
             Invoke-WebRequest -Uri (($standalone_req.programInformation.image | Sort-Object -Property width -Descending).url[0]) -OutFile "poster.jpg"
         }
         else {
-            Write-Warning "Could not find poster"
+            Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object "Could not find poster"
         }
         Write-Output "Images: Done"
     }
 }
 
-if ($type -eq "series"){
+if ($type -eq "series") {
     $global:episodes = @()
     $global:subtitles = @()
     if (!($DropImages)) {
         $global:images = @()
-        if ($series_backdrop_url){
+        if ($series_backdrop_url) {
             Invoke-WebRequest -Uri "$series_backdrop_url" -OutFile "background.jpg"
         }
-        if ($series_poster_url){
+        if ($series_poster_url) {
             Invoke-WebRequest -Uri "$series_poster_url" -OutFile "poster.jpg"
         }
     }
     foreach ($season in $seasons) {
-        $episodes_req = Invoke-RestMethod "https://psapi.nrk.no/tv/catalog/series/$name/seasons/$season"
+        $episodes_req = Invoke-RestMethod -Uri "https://psapi.nrk.no/tv/catalog/series/$name/seasons/$season"
         foreach ($episode_raw in $episodes_req._embedded.episodes) {
             Get-Episodeinfo
         }
@@ -339,7 +341,7 @@ if ($type -eq "series"){
                 $sub_forced = ""
             }
 
-            if (!(Test-Path -PathType "Container" -Path ($subtitle.seasondn))){
+            if (!(Test-Path -PathType "Container" -Path ($subtitle.seasondn))) {
                 New-Item -ItemType "Directory" -Path ($subtitle.seasondn) | Out-Null
             }
 
@@ -362,7 +364,7 @@ if ($type -eq "series"){
         foreach ($image in $images) {
             $img_dl_count += 1
             Write-Output "Downloading image ($img_dl_count/$images_count)"
-            if (!(Test-Path -PathType "Container" -Path ($image.seasondn))){
+            if (!(Test-Path -PathType "Container" -Path ($image.seasondn))) {
                 New-Item -ItemType "Directory" -Path ($image.seasondn) | Out-Null
             }
 
@@ -380,4 +382,4 @@ if ($type -eq "series"){
     }
 }
 
-Set-Location "$root_location"
+Set-Location -Path "$root_location"
