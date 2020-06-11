@@ -53,6 +53,9 @@ function Get-Episodeinfo {
     if ($episode_raw.sequenceNumber) {
         $seq_num = "{0:d2}" -f ($episode_raw.sequenceNumber)
     }
+    else {
+        $seq_num = $episode_raw.prfId
+    }
     $episode_manifest = Invoke-RestMethod -Uri ("https://psapi.nrk.no/playback/manifest/program/" + $episode_raw.prfId)
 
     if (!($DropVideo)) {
