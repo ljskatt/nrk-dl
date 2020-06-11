@@ -61,7 +61,7 @@ function Get-Episodeinfo {
 
     if (!($DropSubtitles)) {
         if ($episode_manifest.playable.subtitles.Count -gt 1) {
-            Write-Warning ($episode_raw.prfId + " har mer enn 1 subtitle (" + $episode_manifest.playable.subtitles.Count + " subtitles), gjerne dobbelsjekk subtitles")
+            Write-Warning -Message ($episode_raw.prfId + " har mer enn 1 subtitle (" + $episode_manifest.playable.subtitles.Count + " subtitles), gjerne dobbelsjekk subtitles")
         }
         foreach ($sub in $episode_manifest.playable.subtitles) {
             $global:subtitles += New-Object -TypeName "PSObject" -Property @{'id'=$episode_raw.prfId;'language'=$sub.language;'forced'=$sub.defaultOn;'url'=$sub.webVtt;'title'=$episode_title;'date'=$episode_raw.firstTransmissionDateDisplayValue;'seasonfn'="$season_filename";'seasondn'="$season_dirname";'seq_num'="$seq_num"}
@@ -98,7 +98,7 @@ if (!(Test-Path -PathType "Container" -Path "downloads")) {
         Write-Output "Opprettet downloads mappe"
     }
     else {
-        Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object "Kunne ikke opprette downloads mappe"
+        Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object "Kunne ikke opprette downloads mappe" -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
         exit
     }   
 }
@@ -123,7 +123,7 @@ if ($seasons) {
             $series_backdrop_url = ($series_req._embedded.seasons.backdropImage | Sort-Object -Property width -Descending).url[0]
         }
         else {
-            Write-Warning "Kunne ikke finne serie-backdrop"
+            Write-Warning -Message "Kunne ikke finne serie-backdrop"
         }
 
         if ($series_req.sequential.posterImage -ne $null) {
@@ -151,7 +151,7 @@ if ($seasons) {
             $series_poster_url = ($series_req._embedded.seasons.image | Sort-Object -Property width -Descending).url[0]
         }
         else {
-            Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object "Kunne ikke finne serie-poster"
+            Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object "Kunne ikke finne serie-poster" -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
         }
     }
     $type = "series"
@@ -171,53 +171,53 @@ else {
         $type = "standalone"
     }
     else {
-        Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object "Kunne ikke finne program/serie"
+        Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object "Kunne ikke finne program/serie" -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
         exit
     }
 }
 
-Write-Output "----------" "" "$name (Type: $type)" "Download folder: $root_location\downloads\$name" ""
-Write-Host "Video:             " -NoNewline
+Write-Output "--------------------" "" "$name (Type: $type)" "Download folder: $root_location\downloads\$name" ""
+Write-Host "Video:             |" -NoNewline
 if ($DropVideo) {
-    Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " OFF "
+    Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " OFF " -NoNewline; Write-Host -Object "|"
 }
 else {
-    Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " ON "
+    Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " ON " -NoNewline; Write-Host -Object "|"
 }
 
-Write-Host "Images:            " -NoNewline
+Write-Host "Images:            |" -NoNewline
 if ($DropImages) {
-    Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " OFF "
+    Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " OFF " -NoNewline; Write-Host -Object "|"
 }
 else {
-    Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " ON "
+    Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " ON " -NoNewline; Write-Host -Object "|"
 }
 
-Write-Host "Subtitles:         " -NoNewline
+Write-Host "Subtitles:         |" -NoNewline
 if ($DropSubtitles) {
-    Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " OFF "
+    Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " OFF " -NoNewline; Write-Host -Object "|"
 }
 else {
-    Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " ON "
+    Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " ON " -NoNewline; Write-Host -Object "|"
 }
 
-Write-Host "Legacy Formatting: " -NoNewline
+Write-Host "Legacy Formatting: |" -NoNewline
 if ($LegacyFormatting) {
-    Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " ON "
+    Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " ON " -NoNewline; Write-Host -Object "|"
 }
 else {
-    Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " OFF "
+    Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " OFF " -NoNewline; Write-Host -Object "|"
 }
 
-Write-Host "Include Extras:    " -NoNewline
+Write-Host "Include Extras:    |" -NoNewline
 if ($IncludeExtras) {
-    Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " ON "
+    Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " ON " -NoNewline; Write-Host -Object "|"
 }
 else {
-    Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " OFF "
+    Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " OFF " -NoNewline; Write-Host -Object "|"
 }
 
-Write-Output "" "----------"
+Write-Output "" "--------------------"
 Read-Host -Prompt "Press enter to continue, CTRL + C to quit"
 
 if (!(Test-Path -PathType "Container" -Path "downloads/$name")) {
@@ -226,7 +226,7 @@ if (!(Test-Path -PathType "Container" -Path "downloads/$name")) {
         Write-Output "Opprettet $name mappe"
     }
     else {
-        Write-Warning "Kunne ikke opprette $name mappe"
+        Write-Warning -Message "Kunne ikke opprette $name mappe"
         exit
     }
 }
@@ -243,7 +243,7 @@ if ($type -eq "standalone") {
         $subtitles = (Invoke-RestMethod -Uri "https://psapi.nrk.no/playback/manifest/program/$name").playable.subtitles
         Write-Output "Subtitles: Downloading"
         if ($subtitles.Count -gt 1) {
-            Write-Warning ("$name har mer enn 1 subtitle (" + $subtitles.Count + " subtitles), gjerne dobbelsjekk subtitles")
+            Write-Warning -Message ("$name har mer enn 1 subtitle (" + $subtitles.Count + " subtitles), gjerne dobbelsjekk subtitles")
         }
         foreach ($subtitle in $subtitles) {
             if ($subtitle.defaultOn -eq $true) {
@@ -268,7 +268,7 @@ if ($type -eq "standalone") {
             Invoke-WebRequest -Uri (($standalone_req.programInformation.image | Sort-Object -Property width -Descending).url[0]) -OutFile "poster.jpg"
         }
         else {
-            Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object "Could not find poster"
+            Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object "Could not find poster" -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
         }
         Write-Output "Images: Done"
     }
@@ -338,13 +338,13 @@ if ($type -eq "series") {
                     Write-Output "Downloaded ($download_count/$episodes_count)"
                 }
                 else {
-                    Write-Warning "Download failed, trying fallback url"
+                    Write-Warning -Message "Download failed, trying fallback url"
                     & "$root_location\youtube-dl.exe" -q ($episode.url_fallback) -o "$outfile"
                     if (Test-Path -PathType "Leaf" -Path "$outfile") {
                         Write-Output "Downloaded ($download_count/$episodes_count)"
                     }
                     else {
-                        Write-Host -BackgroundColor "red" -ForegroundColor "black" -Object ("Nedlasting av " + $episode.id + " feilet")
+                        Write-Host -BackgroundColor "red" -ForegroundColor "black" -Object ("Nedlasting av " + $episode.id + " feilet") -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
                     }
                 }
             }
