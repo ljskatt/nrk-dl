@@ -17,7 +17,11 @@ param (
 
     [Parameter()]
     [switch]
-    $LegacyFormatting
+    $LegacyFormatting,
+
+    [Parameter()]
+    [switch]
+    $IncludeExtras
 )
 
 function Format-Name {
@@ -38,7 +42,12 @@ function Format-Name {
 }
 
 function Get-Episodeinfo {
-    $season_filename = "{0:d2}" -f ([int]$season)
+    if ($season -eq "extramaterial") {
+        $season_filename = "00"
+    }
+    else {
+        $season_filename = "{0:d2}" -f ([int]$season)
+    }
     $season_dirname = "Season " + "$season_filename"
     $episode_title = Format-Name -Name ($episode_raw.titles.title)
     if ($episode_raw.sequenceNumber) {
@@ -98,6 +107,7 @@ $seasons = $null
 $standalone = $null
 $series_req = Invoke-RestMethod -Uri "https://psapi.nrk.no/tv/catalog/series/$name"
 $seasons = $series_req._links.seasons.name
+
 if ($seasons) {
     if (!($DropImages)) {
         if ($series_req.sequential.backdropImage -ne $null) {
@@ -199,6 +209,14 @@ else {
     Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " OFF "
 }
 
+Write-Host "Include Extras:    " -NoNewline
+if ($IncludeExtras) {
+    Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " ON "
+}
+else {
+    Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " OFF "
+}
+
 Write-Output "" "----------"
 Read-Host -Prompt "Press enter to continue, CTRL + C to quit"
 
@@ -275,6 +293,13 @@ if ($type -eq "series") {
         }
 
         foreach ($episode_raw in $episodes_req._embedded.instalments) {
+            Get-Episodeinfo
+        }
+    }
+    if ($series_req._embedded.extraMaterial._links.self.href -ne $null) {
+        $extras_req = Invoke-RestMethod -Uri ("https://psapi.nrk.no" + $series_req._embedded.extraMaterial._links.self.href)
+        $season = "00"
+        foreach ($episode_raw in $extras_req._embedded.episodes) {
             Get-Episodeinfo
         }
     }
