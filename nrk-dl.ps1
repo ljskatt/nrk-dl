@@ -64,7 +64,7 @@ function Get-Episodeinfo {
 
     if (!($DropSubtitles)) {
         if ($episode_manifest.playable.subtitles.Count -gt 1) {
-            Write-Warning -Message ($episode_raw.prfId + " har mer enn 1 subtitle (" + $episode_manifest.playable.subtitles.Count + " subtitles), gjerne dobbelsjekk subtitles")
+            Write-Host -BackgroundColor "Yellow" -ForegroundColor "Black" -Object (" " + $episode_raw.prfId + " has more than 1 subtitle (" + $episode_manifest.playable.subtitles.Count + " subtitles), please double check ") -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
         }
         foreach ($sub in $episode_manifest.playable.subtitles) {
             $global:subtitles += New-Object -TypeName "PSObject" -Property @{'id'=$episode_raw.prfId;'language'=$sub.language;'forced'=$sub.defaultOn;'url'=$sub.webVtt;'title'=$episode_title;'date'=$episode_raw.firstTransmissionDateDisplayValue;'seasonfn'="$season_filename";'seasondn'="$season_dirname";'seq_num'="$seq_num"}
@@ -84,24 +84,38 @@ $ProgressPreference = 'SilentlyContinue'
 $root_location = Get-Location
 
 if (!(Test-Path -PathType "Leaf" -Path "youtube-dl.exe")) {
-    Write-Output "Downloading youtube-dl"
+    Write-Output "" "Downloading youtube-dl"
     Invoke-WebRequest -Uri "https://youtube-dl.org/downloads/latest/youtube-dl.exe" -OutFile "youtube-dl.exe"
-    Write-Output "Downloaded youtube-dl"
+    if (Test-Path -PathType "Leaf" -Path "youtube-dl.exe") {
+        Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " Success " -NoNewline; Write-Host -Object "|"; Write-Host ""
+    }
+    else {
+        Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " Failed " -NoNewline; Write-Host -Object "|"
+        exit
+    }
+    
 }
 
 if (!(Test-Path -PathType "Leaf" -Path "ffmpeg.exe")) {
     Write-Output "Downloading ffmpeg"
     Invoke-WebRequest -Uri "https://cdn.serverhost.no/ljskatt/ffmpeg.exe" -OutFile "ffmpeg.exe"
-    Write-Output "Downloaded ffmpeg"
+    
+    if (Test-Path -PathType "Leaf" -Path "ffmpeg.exe") {
+        Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " Success " -NoNewline; Write-Host -Object "|"; Write-Host ""
+    }
+    else {
+        Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " Failed " -NoNewline; Write-Host -Object "|"
+        exit
+    }
 }
 
 if (!(Test-Path -PathType "Container" -Path "downloads")) {
     New-Item -ItemType "Directory" -Path "downloads" | Out-Null
     if (Test-Path -PathType "Container" -Path "downloads") {
-        Write-Output "Opprettet downloads mappe"
+        Write-Output "Created downloads folder" ""
     }
     else {
-        Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object "Kunne ikke opprette downloads mappe" -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
+        Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " Could not create downloads folder " -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
         exit
     }   
 }
@@ -126,7 +140,7 @@ if ($seasons) {
             $series_backdrop_url = ($series_req._embedded.seasons.backdropImage | Sort-Object -Property width -Descending).url[0]
         }
         else {
-            Write-Warning -Message "Kunne ikke finne serie-backdrop"
+            Write-Host -BackgroundColor "Yellow" -ForegroundColor "Black" -Object " Could not find backdrop-image " -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
         }
 
         if ($series_req.sequential.posterImage -ne $null) {
@@ -154,7 +168,7 @@ if ($seasons) {
             $series_poster_url = ($series_req._embedded.seasons.image | Sort-Object -Property width -Descending).url[0]
         }
         else {
-            Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object "Kunne ikke finne serie-poster" -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
+            Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " Could not find poster-image " -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
         }
     }
     $type = "series"
@@ -174,7 +188,7 @@ else {
         $type = "standalone"
     }
     else {
-        Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object "Kunne ikke finne program/serie" -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
+        Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " Could not find program/series " -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
         exit
     }
 }
@@ -226,10 +240,10 @@ Read-Host -Prompt "Press enter to continue, CTRL + C to quit"
 if (!(Test-Path -PathType "Container" -Path "downloads/$name")) {
     New-Item -ItemType "Directory" -Path "downloads/$name" | Out-Null
     if (Test-Path -PathType "Container" -Path "downloads/$name") {
-        Write-Output "Opprettet $name mappe"
+        Write-Output "Created $name folder" ""
     }
     else {
-        Write-Warning -Message "Kunne ikke opprette $name mappe"
+        Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " Could not create $name folder " -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
         exit
     }
 }
@@ -246,7 +260,7 @@ if ($type -eq "standalone") {
         $subtitles = (Invoke-RestMethod -Uri "https://psapi.nrk.no/playback/manifest/program/$name").playable.subtitles
         Write-Output "Subtitles: Downloading"
         if ($subtitles.Count -gt 1) {
-            Write-Warning -Message ("$name har mer enn 1 subtitle (" + $subtitles.Count + " subtitles), gjerne dobbelsjekk subtitles")
+            Write-Host -BackgroundColor "Yellow" -ForegroundColor "Black" -Object (" $name has more than 1 subtitle (" + $subtitles.Count + " subtitles), please double check ")
         }
         foreach ($subtitle in $subtitles) {
             if ($subtitle.defaultOn -eq $true) {
@@ -271,7 +285,7 @@ if ($type -eq "standalone") {
             Invoke-WebRequest -Uri (($standalone_req.programInformation.image | Sort-Object -Property width -Descending).url[0]) -OutFile "poster.jpg"
         }
         else {
-            Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object "Could not find poster" -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
+            Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " Could not find poster " -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
         }
         Write-Output "Images: Done"
     }
@@ -311,6 +325,8 @@ if ($type -eq "series") {
     $subtitles = $global:subtitles
     $images = $global:images
 
+    Write-Output "" ""
+
     if (!($DropVideo)) {
         $episodes_count = $episodes.Count
         $download_count = 0
@@ -319,7 +335,6 @@ if ($type -eq "series") {
             if (!(Test-Path -PathType "Container" -Path ($episode.seasondn))) {
                 New-Item -ItemType "Directory" -Path ($episode.seasondn) | Out-Null
             }
-            Write-Output "" "Downloading ($download_count/$episodes_count)"
             $episode.url = $episode.url -replace '{&autoplay,t}', ''
 
             if (($seriestype -eq "sequential") -and (!($LegacyFormatting))) {
@@ -333,40 +348,38 @@ if ($type -eq "series") {
             }
 
             if (Test-Path -PathType "Leaf" -Path "$outfile") {
-                Write-Output "Episode exists: $outfile"
+                Write-Output "Episode ($download_count/$episodes_count) exists: $outfile"
             }
             else {
+                Write-Output "Downloading ($download_count/$episodes_count)"
                 & "$root_location\youtube-dl.exe" -q ($episode.url) -o "$outfile"
                 if (Test-Path -PathType "Leaf" -Path "$outfile") {
-                    Write-Output "Downloaded ($download_count/$episodes_count)"
+                    Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " Success " -NoNewline; Write-Host -Object "|"
                 }
                 else {
-                    Write-Warning -Message "Download failed, trying fallback url"
+                    Write-Host -BackgroundColor "Yellow" -ForegroundColor "Black" -Object " Download failed, trying fallback url " -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
                     & "$root_location\youtube-dl.exe" -q ($episode.url_fallback) -o "$outfile"
                     if (Test-Path -PathType "Leaf" -Path "$outfile") {
-                        Write-Output "Downloaded ($download_count/$episodes_count)"
+                        Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " Success " -NoNewline; Write-Host -Object "|"
                     }
                     else {
-                        Write-Host -BackgroundColor "red" -ForegroundColor "black" -Object ("Nedlasting av " + $episode.id + " feilet") -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
+                        Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " Failed " -NoNewline; Write-Host -Object "|"
                     }
                 }
             }
-            
+            Write-Output ""
         }
+        Write-Output ""
     }
     if (!($DropSubtitles)) {
-        Write-Output "" ""
         $subtitles_count = $subtitles.Count
         $sub_dl_count = 0
         foreach ($subtitle in $subtitles) {
             $sub_dl_count += 1
-            Write-Output "Downloading subtitle ($sub_dl_count/$subtitles_count)"
+            $sub_forced = ""
 
             if ($subtitle.defaultOn -eq $true) {
                 $sub_forced = ".forced"
-            }
-            else {
-                $sub_forced = ""
             }
 
             if (!(Test-Path -PathType "Container" -Path ($subtitle.seasondn))) {
@@ -382,16 +395,27 @@ if ($type -eq "series") {
             else {
                 $outfile = ($subtitle.seasondn + "/" + $subtitle.id + "." + $subtitle.language + "$sub_forced.vtt")
             }
-            Invoke-WebRequest -Uri ($subtitle.url) -OutFile "$outfile"
+            if (Test-Path -PathType "Leaf" -Path "$outfile") {
+                Write-Output "Subtitle ($sub_dl_count/$subtitles_count) already exists, skipping ($outfile)"
+            }
+            else {
+                Write-Host -Object "Downloading subtitle ($sub_dl_count/$subtitles_count) " -NoNewline
+                Invoke-WebRequest -Uri ($subtitle.url) -OutFile "$outfile"
+                if (Test-Path -PathType "Leaf" -Path "$outfile") {
+                    Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " Success " -NoNewline; Write-Host -Object "|"
+                }
+                else {
+                    Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " Failed "-NoNewline; Write-Host -Object "|"
+                }
+            }
         }
+        Write-Output ""
     }
     if (!($DropImages)) {
-        Write-Output "" ""
         $images_count = $images.Count
         $img_dl_count = 0
         foreach ($image in $images) {
             $img_dl_count += 1
-            Write-Output "Downloading image ($img_dl_count/$images_count)"
             if (!(Test-Path -PathType "Container" -Path ($image.seasondn))) {
                 New-Item -ItemType "Directory" -Path ($image.seasondn) | Out-Null
             }
@@ -405,7 +429,20 @@ if ($type -eq "series") {
             else {
                 $outfile = ($image.seasondn + "/" + $image.id + ".jpg")
             }
-            Invoke-WebRequest -Uri ($image.url) -OutFile "$outfile"
+            
+            if (Test-Path -PathType "Leaf" -Path "$outfile") {
+                Write-Output "Image ($img_dl_count/$images_count) already exists, skipping"
+            }
+            else {
+                Write-Host -Object "Downloading image ($img_dl_count/$images_count) " -NoNewline
+                Invoke-WebRequest -Uri ($image.url) -OutFile "$outfile"
+                if (Test-Path -PathType "Leaf" -Path "$outfile") {
+                    Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " Success " -NoNewline; Write-Host -Object "|"
+                }
+                else {
+                    Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " Failed "-NoNewline; Write-Host -Object "|"
+                }
+            }
         }
     }
 }
