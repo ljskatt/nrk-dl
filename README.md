@@ -17,7 +17,7 @@ Dette vil automatisk bli lastet ned når du kjører scriptet:
 
 Last ned filen og kjør kommandoen for å begynne å laste ned episoden/episoder, scriptet vil selv laste ned dependencies som den trenger.
 
-`.\nrk-dl.ps1 [-Name] <program> [-DropVideo] [-DropSubtitles] [-DropImages] [-LegacyFormatting] [-IncludeExtras]`
+`.\nrk-dl.ps1 [-Name] <program> [-DropVideo] [-DropSubtitles] [-DropImages] [-LegacyFormatting] [-IncludeExtras] [-IncludeDescriptions]`
 
 ### Eksempel
 

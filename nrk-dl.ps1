@@ -21,7 +21,11 @@ param (
 
     [Parameter()]
     [switch]
-    $IncludeExtras
+    $IncludeExtras,
+
+    [Parameter()]
+    [switch]
+    $IncludeDescriptions
 )
 
 function Format-Name {
@@ -76,6 +80,12 @@ function Get-Episodeinfo {
         $episode_image = ($episode_raw.image | Sort-Object -Property width -Descending).url[0]
         if ($episode_image) {
             $global:images += New-Object -TypeName "PSObject" -Property @{'id'=$episode_raw.prfId;'url'=$episode_image;'title'=$episode_title;'date'=$episode_raw.firstTransmissionDateDisplayValue;'seasonfn'="$season_filename";'seasondn'="$season_dirname";'seq_num'="$seq_num"}
+        }
+    }
+
+    if ($IncludeDescriptions) {
+        if ($episode_raw.titles.subtitle) {
+            $global:descriptions += New-Object -TypeName "PSObject" -Property @{'desc'=$episode_raw.titles.subtitle;'id'=$episode_raw.prfId;'title'=$episode_title;'date'=$episode_raw.firstTransmissionDateDisplayValue;'seasonfn'="$season_filename";'seasondn'="$season_dirname";'seq_num'="$seq_num"}
         }
     }
 }
@@ -194,7 +204,7 @@ else {
 }
 
 Write-Output "--------------------" "" "$name (Type: $type)" "Download folder: $root_location\downloads\$name" ""
-Write-Host "Video:             |" -NoNewline
+Write-Host "Video:                |" -NoNewline
 if ($DropVideo) {
     Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " OFF " -NoNewline; Write-Host -Object "|"
 }
@@ -202,7 +212,7 @@ else {
     Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " ON " -NoNewline; Write-Host -Object "|"
 }
 
-Write-Host "Images:            |" -NoNewline
+Write-Host "Images:               |" -NoNewline
 if ($DropImages) {
     Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " OFF " -NoNewline; Write-Host -Object "|"
 }
@@ -210,7 +220,7 @@ else {
     Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " ON " -NoNewline; Write-Host -Object "|"
 }
 
-Write-Host "Subtitles:         |" -NoNewline
+Write-Host "Subtitles:            |" -NoNewline
 if ($DropSubtitles) {
     Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " OFF " -NoNewline; Write-Host -Object "|"
 }
@@ -218,7 +228,7 @@ else {
     Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " ON " -NoNewline; Write-Host -Object "|"
 }
 
-Write-Host "Legacy Formatting: |" -NoNewline
+Write-Host "Legacy Formatting:    |" -NoNewline
 if ($LegacyFormatting) {
     Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " ON " -NoNewline; Write-Host -Object "|"
 }
@@ -226,8 +236,16 @@ else {
     Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " OFF " -NoNewline; Write-Host -Object "|"
 }
 
-Write-Host "Include Extras:    |" -NoNewline
+Write-Host "Include Extras:       |" -NoNewline
 if ($IncludeExtras) {
+    Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " ON " -NoNewline; Write-Host -Object "|"
+}
+else {
+    Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " OFF " -NoNewline; Write-Host -Object "|"
+}
+
+Write-Host "Include Descriptions: |" -NoNewline
+if ($IncludeDescriptions) {
     Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " ON " -NoNewline; Write-Host -Object "|"
 }
 else {
@@ -294,6 +312,7 @@ if ($type -eq "standalone") {
 if ($type -eq "series") {
     $global:episodes = @()
     $global:subtitles = @()
+    $global:descriptions = @()
     if (!($DropImages)) {
         $global:images = @()
         if ($series_backdrop_url) {
@@ -324,6 +343,7 @@ if ($type -eq "series") {
     $episodes = $global:episodes
     $subtitles = $global:subtitles
     $images = $global:images
+    $descriptions = $global:descriptions
 
     Write-Output "" ""
 
@@ -436,6 +456,41 @@ if ($type -eq "series") {
             else {
                 Write-Host -Object "Downloading image ($img_dl_count/$images_count) " -NoNewline
                 Invoke-WebRequest -Uri ($image.url) -OutFile "$outfile"
+                if (Test-Path -PathType "Leaf" -Path "$outfile") {
+                    Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " Success " -NoNewline; Write-Host -Object "|"
+                }
+                else {
+                    Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " Failed "-NoNewline; Write-Host -Object "|"
+                }
+            }
+        }
+        Write-Output ""
+    }
+    if ($IncludeDescriptions) {
+        $desc_count = $descriptions.Count
+        $desc_dl_count = 0
+        foreach ($description in $descriptions) {
+            $desc_dl_count += 1
+            if (!(Test-Path -PathType "Container" -Path ($description.seasondn))) {
+                New-Item -ItemType "Directory" -Path ($description.seasondn) | Out-Null
+            }
+
+            if (($seriestype -eq "sequential") -and (!($LegacyFormatting))) {
+                $outfile = ($description.seasondn + "/$seriestitle - s" + $description.seasonfn + "e" + $description.seq_num + "-description.txt")
+            }
+            elseif (($description.date) -and (!($LegacyFormatting))) {
+                $outfile = ($description.seasondn + "/$seriestitle - " + $description.date + " - " + $description.title + "-description.txt")
+            }
+            else {
+                $outfile = ($description.seasondn + "/" + $description.id + "-description.txt")
+            }
+            
+            if (Test-Path -PathType "Leaf" -Path "$outfile") {
+                Write-Output "Image ($desc_dl_count/$desc_count) already exists, skipping"
+            }
+            else {
+                Write-Host -Object "Writing description ($desc_dl_count/$desc_count) " -NoNewline
+                $description.desc | Out-File -FilePath "$outfile" -NoNewline
                 if (Test-Path -PathType "Leaf" -Path "$outfile") {
                     Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " Success " -NoNewline; Write-Host -Object "|"
                 }
