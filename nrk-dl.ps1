@@ -165,7 +165,7 @@ if ($seasons) {
         elseif ($series_req._embedded.seasons.posterImage -ne $null) {
             $series_poster_url = ($series_req._embedded.seasons.posterImage | Sort-Object -Property width -Descending).url[0]
         }
-        elseif ($series_req.sequential.image -ne $null){
+        elseif ($series_req.sequential.image -ne $null) {
             $series_poster_url = ($series_req.sequential.image | Sort-Object -Property width -Descending).url[0]
         }
         elseif ($series_req.standard.image -ne $null) {
