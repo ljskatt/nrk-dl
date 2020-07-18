@@ -1,5 +1,8 @@
 # NRK-DL
 
+Lovligheten rundt dette verktøyet er uklart, anbefaler å bare benytte verktøyet til privat, ikke-kommersiell bruk.<br>
+**Bruk av verktøyet gjøres på egen risiko.** [Opphavsrett på NRK](https://www.nrk.no/etikk/opphavsrett-pa-nrk.no-1.2843522)
+
 Dette prosjektet ble startet etter at det ble kjent at NRK innhold fra før 1997 kan bli borte fra NRK om det ikke kommer en ny avtale på plass med Norwaco, derfor bestemte jeg meg for å lage et script som gjør at man lett kan laste ned innehold fra NRK, slik at man kan holde på denne arven.
 
 Avtalen med Norwaco ble fornyet, derfor ble motivet til dette prosjeket endret til å fokusere på å laste ned programmer/serier som stadig blir fjernet fra NRK sitt arkiv, rapporter over hvilke programmer/serier som blir fjernet, kan du finne her: [NRK-Expire](https://github.com/ljskatt/nrk-expire)
