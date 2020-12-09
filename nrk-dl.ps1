@@ -62,11 +62,11 @@ function Get-Episodeinfo {
     }
     $episode_manifest = Invoke-RestMethod -Uri ("https://psapi.nrk.no/playback/manifest/program/" + $episode_raw.prfId)
 
-    if (!($DropVideo)) {
+    if (-not ($DropVideo)) {
         $global:episodes += New-Object -TypeName "PSObject" -Property @{'id'=$episode_raw.prfId;'url'=$episode_raw._links.share.href;'url_fallback'=$episode_manifest.playable.assets.url;'title'=$episode_title;'date'=$episode_raw.firstTransmissionDateDisplayValue;'seasonfn'="$season_filename";'seasondn'="$season_dirname";'seq_num'="$seq_num"}
     }
 
-    if (!($DropSubtitles)) {
+    if (-not ($DropSubtitles)) {
         if ($episode_manifest.playable.subtitles.Count -gt 1) {
             Write-Host -BackgroundColor "Yellow" -ForegroundColor "Black" -Object (" " + $episode_raw.prfId + " has more than 1 subtitle (" + $episode_manifest.playable.subtitles.Count + " subtitles), please double check ") -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
         }
@@ -75,7 +75,7 @@ function Get-Episodeinfo {
         }
     }
 
-    if (!($DropImages)) {
+    if (-not ($DropImages)) {
         $episode_image = $null
         $episode_image = ($episode_raw.image | Sort-Object -Property width -Descending).url[0]
         if ($episode_image) {
@@ -93,7 +93,7 @@ function Get-Episodeinfo {
 $ProgressPreference = 'SilentlyContinue'
 $root_location = Get-Location
 
-if (!(Test-Path -PathType "Leaf" -Path "youtube-dl.exe")) {
+if (-not (Test-Path -PathType "Leaf" -Path "youtube-dl.exe")) {
     Write-Output "" "Downloading youtube-dl"
     Invoke-WebRequest -Uri "https://youtube-dl.org/downloads/latest/youtube-dl.exe" -OutFile "youtube-dl.exe"
     if (Test-Path -PathType "Leaf" -Path "youtube-dl.exe") {
@@ -106,7 +106,7 @@ if (!(Test-Path -PathType "Leaf" -Path "youtube-dl.exe")) {
     
 }
 
-if (!(Test-Path -PathType "Leaf" -Path "ffmpeg.exe")) {
+if (-not (Test-Path -PathType "Leaf" -Path "ffmpeg.exe")) {
     Write-Output "Downloading ffmpeg"
     Invoke-WebRequest -Uri "https://cdn.serverhost.no/ljskatt/ffmpeg.exe" -OutFile "ffmpeg.exe"
     
@@ -119,7 +119,7 @@ if (!(Test-Path -PathType "Leaf" -Path "ffmpeg.exe")) {
     }
 }
 
-if (!(Test-Path -PathType "Container" -Path "downloads")) {
+if (-not (Test-Path -PathType "Container" -Path "downloads")) {
     New-Item -ItemType "Directory" -Path "downloads" | Out-Null
     if (Test-Path -PathType "Container" -Path "downloads") {
         Write-Output "Created downloads folder" ""
@@ -136,7 +136,7 @@ $series_req = Invoke-RestMethod -Uri "https://psapi.nrk.no/tv/catalog/series/$na
 $seasons = $series_req._links.seasons.name
 
 if ($seasons) {
-    if (!($DropImages)) {
+    if (-not ($DropImages)) {
         if ($series_req.sequential.backdropImage -ne $null) {
             $series_backdrop_url = ($series_req.sequential.backdropImage | Sort-Object -Property width -Descending).url[0]
         }
@@ -255,7 +255,7 @@ else {
 Write-Output "" "--------------------"
 Read-Host -Prompt "Press enter to continue, CTRL + C to quit"
 
-if (!(Test-Path -PathType "Container" -Path "downloads/$name")) {
+if (-not (Test-Path -PathType "Container" -Path "downloads/$name")) {
     New-Item -ItemType "Directory" -Path "downloads/$name" | Out-Null
     if (Test-Path -PathType "Container" -Path "downloads/$name") {
         Write-Output "Created $name folder" ""
@@ -268,13 +268,13 @@ if (!(Test-Path -PathType "Container" -Path "downloads/$name")) {
 Set-Location -Path "downloads/$name"
 
 if ($type -eq "standalone") {
-    if (!($DropVideo)) {
+    if (-not ($DropVideo)) {
         $standalone = $standalone -replace '{&autoplay,t}', ''
         Write-Output "Video: Downloading"
         & "$root_location\youtube-dl.exe" "$standalone"
         Write-Output "Video: Downloaded"
     }
-    if (!($DropSubtitles)) {
+    if (-not ($DropSubtitles)) {
         $subtitles = (Invoke-RestMethod -Uri "https://psapi.nrk.no/playback/manifest/program/$name").playable.subtitles
         Write-Output "Subtitles: Downloading"
         if ($subtitles.Count -gt 1) {
@@ -291,7 +291,7 @@ if ($type -eq "standalone") {
         }
         Write-Output "Subtitles: Done"
     }
-    if (!($DropImages)) {
+    if (-not ($DropImages)) {
         Write-Output "Images: Downloading"
         if ($standalone_req.programInformation.backdropImage) {
             Invoke-WebRequest -Uri (($standalone_req.programInformation.backdropImage | Sort-Object -Property width -Descending).url[0]) -OutFile "background.jpg"
@@ -313,7 +313,7 @@ if ($type -eq "series") {
     $global:episodes = @()
     $global:subtitles = @()
     $global:descriptions = @()
-    if (!($DropImages)) {
+    if (-not ($DropImages)) {
         $global:images = @()
         if ($series_backdrop_url) {
             Invoke-WebRequest -Uri "$series_backdrop_url" -OutFile "background.jpg"
@@ -347,20 +347,20 @@ if ($type -eq "series") {
 
     Write-Output "" ""
 
-    if (!($DropVideo)) {
+    if (-not ($DropVideo)) {
         $episodes_count = $episodes.Count
         $download_count = 0
         foreach ($episode in $episodes) {
             $download_count += 1
-            if (!(Test-Path -PathType "Container" -Path ($episode.seasondn))) {
+            if (-not (Test-Path -PathType "Container" -Path ($episode.seasondn))) {
                 New-Item -ItemType "Directory" -Path ($episode.seasondn) | Out-Null
             }
             $episode.url = $episode.url -replace '{&autoplay,t}', ''
 
-            if (($seriestype -eq "sequential") -and (!($LegacyFormatting))) {
+            if (($seriestype -eq "sequential") -and (-not ($LegacyFormatting))) {
                 $outfile = ($episode.seasondn + "/$seriestitle - s" + $episode.seasonfn + "e" + $episode.seq_num + ".mp4")
             }
-            elseif (($episode.date) -and (!($LegacyFormatting))) {
+            elseif (($episode.date) -and (-not ($LegacyFormatting))) {
                 $outfile = ($episode.seasondn + "/$seriestitle - " + $episode.date + " - " + $episode.title + ".mp4")
             }
             else {
@@ -391,7 +391,7 @@ if ($type -eq "series") {
         }
         Write-Output ""
     }
-    if (!($DropSubtitles)) {
+    if (-not ($DropSubtitles)) {
         $subtitles_count = $subtitles.Count
         $sub_dl_count = 0
         foreach ($subtitle in $subtitles) {
@@ -402,14 +402,14 @@ if ($type -eq "series") {
                 $sub_forced = ".forced"
             }
 
-            if (!(Test-Path -PathType "Container" -Path ($subtitle.seasondn))) {
+            if (-not (Test-Path -PathType "Container" -Path ($subtitle.seasondn))) {
                 New-Item -ItemType "Directory" -Path ($subtitle.seasondn) | Out-Null
             }
 
-            if (($seriestype -eq "sequential") -and (!($LegacyFormatting))) {
+            if (($seriestype -eq "sequential") -and (-not ($LegacyFormatting))) {
                 $outfile = ($subtitle.seasondn + "/$seriestitle - s" + $subtitle.seasonfn + "e" + $subtitle.seq_num + "." + $subtitle.language + "$sub_forced.vtt")
             }
-            elseif (($subtitle.date) -and (!($LegacyFormatting))) {
+            elseif (($subtitle.date) -and (-not ($LegacyFormatting))) {
                 $outfile = ($subtitle.seasondn + "/$seriestitle - " + $subtitle.date + " - " + $subtitle.title + "." + $subtitle.language + "$sub_forced.vtt")
             }
             else {
@@ -431,19 +431,19 @@ if ($type -eq "series") {
         }
         Write-Output ""
     }
-    if (!($DropImages)) {
+    if (-not ($DropImages)) {
         $images_count = $images.Count
         $img_dl_count = 0
         foreach ($image in $images) {
             $img_dl_count += 1
-            if (!(Test-Path -PathType "Container" -Path ($image.seasondn))) {
+            if (-not (Test-Path -PathType "Container" -Path ($image.seasondn))) {
                 New-Item -ItemType "Directory" -Path ($image.seasondn) | Out-Null
             }
 
-            if (($seriestype -eq "sequential") -and (!($LegacyFormatting))) {
+            if (($seriestype -eq "sequential") -and (-not ($LegacyFormatting))) {
                 $outfile = ($image.seasondn + "/$seriestitle - s" + $image.seasonfn + "e" + $image.seq_num + ".jpg")
             }
-            elseif (($image.date) -and (!($LegacyFormatting))) {
+            elseif (($image.date) -and (-not ($LegacyFormatting))) {
                 $outfile = ($image.seasondn + "/$seriestitle - " + $image.date + " - " + $image.title + ".jpg")
             }
             else {
@@ -471,14 +471,14 @@ if ($type -eq "series") {
         $desc_dl_count = 0
         foreach ($description in $descriptions) {
             $desc_dl_count += 1
-            if (!(Test-Path -PathType "Container" -Path ($description.seasondn))) {
+            if (-not (Test-Path -PathType "Container" -Path ($description.seasondn))) {
                 New-Item -ItemType "Directory" -Path ($description.seasondn) | Out-Null
             }
 
-            if (($seriestype -eq "sequential") -and (!($LegacyFormatting))) {
+            if (($seriestype -eq "sequential") -and (-not ($LegacyFormatting))) {
                 $outfile = ($description.seasondn + "/$seriestitle - s" + $description.seasonfn + "e" + $description.seq_num + "-description.txt")
             }
-            elseif (($description.date) -and (!($LegacyFormatting))) {
+            elseif (($description.date) -and (-not($LegacyFormatting))) {
                 $outfile = ($description.seasondn + "/$seriestitle - " + $description.date + " - " + $description.title + "-description.txt")
             }
             else {
