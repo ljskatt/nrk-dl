@@ -93,6 +93,13 @@ function Get-Episodeinfo {
 $ProgressPreference = 'SilentlyContinue'
 $root_location = Get-Location
 
+if (-not (Test-Path -Path "C:\Windows\System32\MSVCR100.dll" -PathType "leaf")) {
+    Write-Host -Object ""
+    Write-Host -BackgroundColor "Red" -ForegroundColor "White" -Object " MSVCR100.dll (required by youtube-dl) is missing, please install missing C++ library: " -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
+    Write-Host -BackgroundColor "Red" -ForegroundColor "White" -Object " https://www.microsoft.com/en-US/download/details.aspx?id=8328 " -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
+    Write-Host -Object ""
+}
+
 if (-not (Test-Path -PathType "Leaf" -Path "youtube-dl.exe")) {
     Write-Output "" "Downloading youtube-dl"
     Invoke-WebRequest -Uri "https://youtube-dl.org/downloads/latest/youtube-dl.exe" -OutFile "youtube-dl.exe"
