@@ -25,7 +25,11 @@ param (
 
     [Parameter()]
     [switch]
-    $IncludeDescriptions
+    $IncludeDescriptions,
+
+    [Parameter()]
+    [switch]
+    $DisableSSLCertVerify # This will only affect youtube-dl downloads and not connection to NRK api, SHOULD ONLY BE USED IF YOU GET ERRORS LIKE: [SSL: CERTIFICATE_VERIFY_FAILED]
 )
 
 function Format-Name {
@@ -46,6 +50,7 @@ function Format-Name {
 }
 
 function Get-Episodeinfo {
+    $processed_url = $null
     if ($season -eq "extramaterial") {
         $season_filename = "00"
     }
@@ -62,8 +67,10 @@ function Get-Episodeinfo {
     }
     $episode_manifest = Invoke-RestMethod -Uri ("https://psapi.nrk.no/playback/manifest/program/" + $episode_raw.prfId)
 
+    $processed_url = "https://tv.nrk.no" + $episode_raw._links.playback.href.Replace('/mediaelement','')
+
     if (-not ($DropVideo)) {
-        $global:episodes += New-Object -TypeName "PSObject" -Property @{'id'=$episode_raw.prfId;'url'=$episode_raw._links.share.href;'url_fallback'=$episode_manifest.playable.assets.url;'title'=$episode_title;'date'=$episode_raw.firstTransmissionDateDisplayValue;'seasonfn'="$season_filename";'seasondn'="$season_dirname";'seq_num'="$seq_num"}
+        $global:episodes += New-Object -TypeName "PSObject" -Property @{'id'=$episode_raw.prfId;'url'=$processed_url;'url_fallback'=$episode_manifest.playable.assets.url;'title'=$episode_title;'date'=$episode_raw.firstTransmissionDateDisplayValue;'seasonfn'="$season_filename";'seasondn'="$season_dirname";'seq_num'="$seq_num"}
     }
 
     if (-not ($DropSubtitles)) {
@@ -92,6 +99,13 @@ function Get-Episodeinfo {
 
 $ProgressPreference = 'SilentlyContinue'
 $root_location = Get-Location
+
+if ($DisableSSLCertVerify) {
+    $ytdl_parameters = '--no-check-certificate'
+}
+else {
+    $ytdl_parameters = ''
+}
 
 if (-not (Test-Path -Path "C:\Windows\System32\MSVCR100.dll" -PathType "leaf")) {
     Write-Host -Object ""
@@ -211,7 +225,7 @@ else {
 }
 
 Write-Output "--------------------" "" "$name (Type: $type)" "Download folder: $root_location\downloads\$name" ""
-Write-Host "Video:                |" -NoNewline
+Write-Host "Video:                 |" -NoNewline
 if ($DropVideo) {
     Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " OFF " -NoNewline; Write-Host -Object "|"
 }
@@ -219,7 +233,7 @@ else {
     Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " ON " -NoNewline; Write-Host -Object "|"
 }
 
-Write-Host "Images:               |" -NoNewline
+Write-Host "Images:                |" -NoNewline
 if ($DropImages) {
     Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " OFF " -NoNewline; Write-Host -Object "|"
 }
@@ -227,7 +241,7 @@ else {
     Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " ON " -NoNewline; Write-Host -Object "|"
 }
 
-Write-Host "Subtitles:            |" -NoNewline
+Write-Host "Subtitles:             |" -NoNewline
 if ($DropSubtitles) {
     Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " OFF " -NoNewline; Write-Host -Object "|"
 }
@@ -235,7 +249,7 @@ else {
     Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " ON " -NoNewline; Write-Host -Object "|"
 }
 
-Write-Host "Legacy Formatting:    |" -NoNewline
+Write-Host "Legacy Formatting:     |" -NoNewline
 if ($LegacyFormatting) {
     Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " ON " -NoNewline; Write-Host -Object "|"
 }
@@ -243,7 +257,7 @@ else {
     Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " OFF " -NoNewline; Write-Host -Object "|"
 }
 
-Write-Host "Include Extras:       |" -NoNewline
+Write-Host "Include Extras:        |" -NoNewline
 if ($IncludeExtras) {
     Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " ON " -NoNewline; Write-Host -Object "|"
 }
@@ -251,12 +265,20 @@ else {
     Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " OFF " -NoNewline; Write-Host -Object "|"
 }
 
-Write-Host "Include Descriptions: |" -NoNewline
+Write-Host "Include Descriptions:  |" -NoNewline
 if ($IncludeDescriptions) {
     Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " ON " -NoNewline; Write-Host -Object "|"
 }
 else {
     Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " OFF " -NoNewline; Write-Host -Object "|"
+}
+
+Write-Host "SSL Cert Verification: |" -NoNewline
+if ($DisableSSLCertVerify) {
+    Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " OFF " -NoNewline; Write-Host -Object "|"
+}
+else {
+    Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " ON " -NoNewline; Write-Host -Object "|"
 }
 
 Write-Output "" "--------------------"
@@ -278,7 +300,7 @@ if ($type -eq "standalone") {
     if (-not ($DropVideo)) {
         $standalone = $standalone -replace '{&autoplay,t}', ''
         Write-Output "Video: Downloading"
-        & "$root_location\youtube-dl.exe" "$standalone"
+        & "$root_location\youtube-dl.exe" "$standalone" $ytdl_parameters
         Write-Output "Video: Downloaded"
     }
     if (-not ($DropSubtitles)) {
@@ -379,13 +401,13 @@ if ($type -eq "series") {
             }
             else {
                 Write-Output "Downloading ($download_count/$episodes_count)"
-                & "$root_location\youtube-dl.exe" -q ($episode.url) -o "$outfile"
+                & "$root_location\youtube-dl.exe" -q ($episode.url) -o "$outfile" $ytdl_parameters
                 if (Test-Path -PathType "Leaf" -Path "$outfile") {
                     Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " Success " -NoNewline; Write-Host -Object "|"
                 }
                 else {
                     Write-Host -BackgroundColor "Yellow" -ForegroundColor "Black" -Object " Download failed, trying fallback url " -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
-                    & "$root_location\youtube-dl.exe" -q ($episode.url_fallback) -o "$outfile"
+                    & "$root_location\youtube-dl.exe" -q ($episode.url_fallback) -o "$outfile" $ytdl_parameters
                     if (Test-Path -PathType "Leaf" -Path "$outfile") {
                         Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " Success " -NoNewline; Write-Host -Object "|"
                     }
