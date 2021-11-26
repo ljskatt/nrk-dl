@@ -29,7 +29,11 @@ param (
 
     [Parameter()]
     [switch]
-    $DisableSSLCertVerify # This will only affect youtube-dl downloads and not connection to NRK api, SHOULD ONLY BE USED IF YOU GET ERRORS LIKE: [SSL: CERTIFICATE_VERIFY_FAILED]
+    $DisableSSLCertVerify, # This will only affect youtube-dl downloads and not connection to NRK api, SHOULD ONLY BE USED IF YOU GET ERRORS LIKE: [SSL: CERTIFICATE_VERIFY_FAILED]
+
+    [Parameter()]
+    [switch]
+    $Debug
 )
 
 function Format-Name {
@@ -100,31 +104,53 @@ function Get-Episodeinfo {
 $ProgressPreference = 'SilentlyContinue'
 $root_location = Get-Location
 
+Write-Output ""
+if ($IsWindows) {
+    Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " Supported " -NoNewline
+    Write-Output " Running script with Windows" ""
+}
+if ($IsMacOS) {
+    Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " Supported " -NoNewline
+    Write-Output " Running script with Mac OS" ""
+}
+if ($IsLinux) {
+    Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " Unsupported " -NoNewline
+    Write-Output " Running script with Linux" ""
+}
+
 if ($DisableSSLCertVerify) {
     $ytdl_parameters = '--no-check-certificate'
 }
 else {
     $ytdl_parameters = ''
 }
-
-if (-not (Test-Path -Path "C:\Windows\System32\MSVCR100.dll" -PathType "leaf")) {
-    Write-Host -Object ""
-    Write-Host -BackgroundColor "Red" -ForegroundColor "White" -Object " MSVCR100.dll (required by youtube-dl) is missing, please install missing C++ library: " -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
-    Write-Host -BackgroundColor "Red" -ForegroundColor "White" -Object " https://www.microsoft.com/en-US/download/details.aspx?id=8328 " -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
-    Write-Host -Object ""
-}
-
-if (-not (Test-Path -PathType "Leaf" -Path "youtube-dl.exe")) {
-    Write-Output "" "Downloading youtube-dl"
-    Invoke-WebRequest -Uri "https://youtube-dl.org/downloads/latest/youtube-dl.exe" -OutFile "youtube-dl.exe"
-    if (Test-Path -PathType "Leaf" -Path "youtube-dl.exe") {
-        Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " Success " -NoNewline; Write-Host -Object "|"; Write-Host ""
+if ($IsMacOS) {
+    if (Get-Command "youtube-dl") {
+        Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " youtube-dl OK " -NoNewline; Write-Host -Object "|"; Write-Host ""
     }
     else {
-        Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " Failed " -NoNewline; Write-Host -Object "|"
-        exit
+        Write-Host -BackgroundColor "Red" -ForegroundColor "White" -Object " youtube-dl is missing, please install it first " -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
     }
-    
+}
+else {
+    if (-not (Test-Path -PathType "Leaf" -Path "youtube-dl.exe")) {
+        Write-Output "" "Downloading youtube-dl"
+        Invoke-WebRequest -Uri "https://youtube-dl.org/downloads/latest/youtube-dl.exe" -OutFile "youtube-dl.exe"
+        if (Test-Path -PathType "Leaf" -Path "youtube-dl.exe") {
+            Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " Success " -NoNewline; Write-Host -Object "|"; Write-Host ""
+        }
+        else {
+            Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " Failed " -NoNewline; Write-Host -Object "|"
+            exit
+        }
+        
+    }
+    if (-not (Test-Path -Path "C:\Windows\System32\MSVCR100.dll" -PathType "leaf")) {
+        Write-Host -Object ""
+        Write-Host -BackgroundColor "Red" -ForegroundColor "White" -Object " MSVCR100.dll (required by youtube-dl) is missing, please install missing C++ library: " -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
+        Write-Host -BackgroundColor "Red" -ForegroundColor "White" -Object " https://www.microsoft.com/en-US/download/details.aspx?id=8328 " -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
+        Write-Host -Object ""
+    }
 }
 
 if (-not (Test-Path -PathType "Leaf" -Path "ffmpeg.exe")) {
@@ -299,8 +325,18 @@ Set-Location -Path "downloads/$name"
 if ($type -eq "standalone") {
     if (-not ($DropVideo)) {
         $standalone = $standalone -replace '{&autoplay,t}', ''
-        Write-Output "Video: Downloading"
-        & "$root_location\youtube-dl.exe" "$standalone" $ytdl_parameters
+        if ($Debug) {
+            Write-Output ("Video: Downloading " + $standalone)
+        }
+        else {
+            Write-Output "Video: Downloading"
+        }
+        if ($IsMacOS) {
+            youtube-dl "$standalone" $ytdl_parameters
+        }
+        else {
+            & "$root_location\youtube-dl.exe" "$standalone" $ytdl_parameters
+        }
         Write-Output "Video: Downloaded"
     }
     if (-not ($DropSubtitles)) {
@@ -400,14 +436,29 @@ if ($type -eq "series") {
                 Write-Output "Episode ($download_count/$episodes_count) exists: $outfile"
             }
             else {
-                Write-Output "Downloading ($download_count/$episodes_count)"
-                & "$root_location\youtube-dl.exe" -q ($episode.url) -o "$outfile" $ytdl_parameters
+                if ($Debug) {
+                    Write-Output ("Downloading ($download_count/$episodes_count)" + $episode.url)
+                }
+                else {
+                    Write-Output "Downloading ($download_count/$episodes_count)"
+                }
+                if ($IsMacOS) {
+                    youtube-dl -q ($episode.url) -o "$outfile" $ytdl_parameters
+                }
+                else {
+                    & "$root_location\youtube-dl.exe" -q ($episode.url) -o "$outfile" $ytdl_parameters
+                }
                 if (Test-Path -PathType "Leaf" -Path "$outfile") {
                     Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " Success " -NoNewline; Write-Host -Object "|"
                 }
                 else {
                     Write-Host -BackgroundColor "Yellow" -ForegroundColor "Black" -Object " Download failed, trying fallback url " -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
-                    & "$root_location\youtube-dl.exe" -q ($episode.url_fallback) -o "$outfile" $ytdl_parameters
+                    if ($IsMacOS) {
+                        youtube-dl -q ($episode.url_fallback) -o "$outfile" $ytdl_parameters
+                    }
+                    else {
+                        & "$root_location\youtube-dl.exe" -q ($episode.url_fallback) -o "$outfile" $ytdl_parameters
+                    }
                     if (Test-Path -PathType "Leaf" -Path "$outfile") {
                         Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " Success " -NoNewline; Write-Host -Object "|"
                     }
@@ -448,7 +499,12 @@ if ($type -eq "series") {
                 Write-Output "Subtitle ($sub_dl_count/$subtitles_count) already exists, skipping ($outfile)"
             }
             else {
-                Write-Host -Object "Downloading subtitle ($sub_dl_count/$subtitles_count) " -NoNewline
+                if ($Debug) {
+                    Write-Host -Object ("Downloading subtitle ($sub_dl_count/$subtitles_count) " + $subtitle.url) -NoNewline
+                }
+                else {
+                    Write-Host -Object "Downloading subtitle ($sub_dl_count/$subtitles_count) " -NoNewline
+                }
                 Invoke-WebRequest -Uri ($subtitle.url) -OutFile "$outfile"
                 if (Test-Path -PathType "Leaf" -Path "$outfile") {
                     Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " Success " -NoNewline; Write-Host -Object "|"
@@ -483,7 +539,12 @@ if ($type -eq "series") {
                 Write-Output "Image ($img_dl_count/$images_count) already exists, skipping"
             }
             else {
-                Write-Host -Object "Downloading image ($img_dl_count/$images_count) " -NoNewline
+                if ($Debug) {
+                    Write-Host -Object ("Downloading image ($img_dl_count/$images_count) " + $image.url) -NoNewline
+                }
+                else {
+                    Write-Host -Object "Downloading image ($img_dl_count/$images_count) " -NoNewline
+                }
                 Invoke-WebRequest -Uri ($image.url) -OutFile "$outfile"
                 if (Test-Path -PathType "Leaf" -Path "$outfile") {
                     Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " Success " -NoNewline; Write-Host -Object "|"
