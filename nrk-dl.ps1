@@ -33,7 +33,7 @@ param (
 
     [Parameter()]
     [switch]
-    $Debug
+    $Debugging
 )
 
 function Format-Name {
@@ -325,7 +325,7 @@ Set-Location -Path "downloads/$name"
 if ($type -eq "standalone") {
     if (-not ($DropVideo)) {
         $standalone = $standalone -replace '{&autoplay,t}', ''
-        if ($Debug) {
+        if ($Debugging) {
             Write-Output ("Video: Downloading " + $standalone)
         }
         else {
@@ -436,8 +436,8 @@ if ($type -eq "series") {
                 Write-Output "Episode ($download_count/$episodes_count) exists: $outfile"
             }
             else {
-                if ($Debug) {
-                    Write-Output ("Downloading ($download_count/$episodes_count)" + $episode.url)
+                if ($Debugging) {
+                    Write-Output ("Downloading ($download_count/$episodes_count) " + $episode.url)
                 }
                 else {
                     Write-Output "Downloading ($download_count/$episodes_count)"
@@ -499,7 +499,7 @@ if ($type -eq "series") {
                 Write-Output "Subtitle ($sub_dl_count/$subtitles_count) already exists, skipping ($outfile)"
             }
             else {
-                if ($Debug) {
+                if ($Debugging) {
                     Write-Host -Object ("Downloading subtitle ($sub_dl_count/$subtitles_count) " + $subtitle.url) -NoNewline
                 }
                 else {
@@ -539,7 +539,7 @@ if ($type -eq "series") {
                 Write-Output "Image ($img_dl_count/$images_count) already exists, skipping"
             }
             else {
-                if ($Debug) {
+                if ($Debugging) {
                     Write-Host -Object ("Downloading image ($img_dl_count/$images_count) " + $image.url) -NoNewline
                 }
                 else {
