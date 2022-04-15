@@ -37,7 +37,7 @@ Scriptet vil laste ned programmet
 
 ### Alignment filer
 
-- [ ] Poirot - [Issue](https://github.com/ljskatt/nrk-dl/issues/5)
+- [x] Poirot - [Issue](https://github.com/ljskatt/nrk-dl/issues/5)
 - [ ] Vera - [Issue](https://github.com/ljskatt/nrk-dl/issues/4)
 
 ## Linux
