@@ -2,8 +2,8 @@
   {
     "id": "KMNO10003922",
     "seasondn": "Season 00",
-    "episode_code": null,
-    "match_comment": null
+    "episode_code": "s00e01 - TRAILER Vera",
+    "match_comment": ""
   },
   {
     "id": "KOIF53009111",
@@ -134,14 +134,14 @@
   {
     "id": "KOIF28002315",
     "seasondn": "Season 06",
-    "episode_code": null,
-    "match_comment": null
+    "episode_code": "s06e03",
+    "match_comment": "Matched content with itv"
   },
   {
     "id": "KOIF28002415",
     "seasondn": "Season 06",
-    "episode_code": null,
-    "match_comment": null
+    "episode_code": "s06e04",
+    "match_comment": "Matched content with itv"
   },
   {
     "id": "KOIF20001717",
@@ -212,8 +212,8 @@
   {
     "id": "KOIF23008418",
     "seasondn": "Season 09",
-    "episode_code": null,
-    "match_comment": null
+    "episode_code": "s09e04",
+    "match_comment": "Matched content with itv"
   },
   {
     "id": "KOIF23000419",
