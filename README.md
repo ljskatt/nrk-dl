@@ -35,7 +35,10 @@ Scriptet vil laste ned alle episodene av Fleksnes
 `.\nrk-dl.ps1 "KOID20001420"`
 Scriptet vil laste ned programmet
 
-<br>
+### Alignment filer
+
+- [ ] Poirot - [Issue](https://github.com/ljskatt/nrk-dl/issues/5)
+- [ ] Vera - [Issue](https://github.com/ljskatt/nrk-dl/issues/4)
 
 ## Linux
 :warning: &nbsp; Dette scriptet fungerer ikke lenger, dette blir oppdatert fortløpende, men Powershell (Windows) er prioritert først :warning:
