@@ -128,7 +128,7 @@ if ($DisableSSLCertVerify) {
 else {
     $ytdl_parameters = ''
 }
-if ($IsMacOS) {
+if ($IsMacOS -or $IsLinux) {
     if (Get-Command "youtube-dl") {
         Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " youtube-dl OK " -NoNewline; Write-Host -Object "|"; Write-Host ""
     }
@@ -157,16 +157,26 @@ else {
     }
 }
 
-if (-not (Test-Path -PathType "Leaf" -Path "ffmpeg.exe")) {
-    Write-Output "Downloading ffmpeg"
-    Invoke-WebRequest -Uri "https://cdn.serverhost.no/ljskatt/ffmpeg.exe" -OutFile "ffmpeg.exe"
-    
-    if (Test-Path -PathType "Leaf" -Path "ffmpeg.exe") {
-        Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " Success " -NoNewline; Write-Host -Object "|"; Write-Host ""
+if ($IsMacOS -or $IsLinux) {
+    if (Get-Command "ffmpeg") {
+        Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " ffmpeg OK " -NoNewline; Write-Host -Object "|"; Write-Host ""
     }
     else {
-        Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " Failed " -NoNewline; Write-Host -Object "|"
-        exit
+        Write-Host -BackgroundColor "Red" -ForegroundColor "White" -Object " ffmpeg is missing, please install it first " -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
+    }
+}
+else {
+    if (-not (Test-Path -PathType "Leaf" -Path "ffmpeg.exe")) {
+        Write-Output "Downloading ffmpeg"
+        Invoke-WebRequest -Uri "https://cdn.serverhost.no/ljskatt/ffmpeg.exe" -OutFile "ffmpeg.exe"
+        
+        if (Test-Path -PathType "Leaf" -Path "ffmpeg.exe") {
+            Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " Success " -NoNewline; Write-Host -Object "|"; Write-Host ""
+        }
+        else {
+            Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " Failed " -NoNewline; Write-Host -Object "|"
+            exit
+        }
     }
 }
 
@@ -354,7 +364,7 @@ if ($type -eq "standalone") {
         else {
             Write-Output "Video: Downloading"
         }
-        if ($IsMacOS) {
+        if ($IsMacOS -or $IsLinux) {
             youtube-dl "$standalone" $ytdl_parameters
         }
         else {
@@ -480,7 +490,7 @@ if ($type -eq "series") {
                 else {
                     Write-Output "Downloading ($download_count/$episodes_count)"
                 }
-                if ($IsMacOS) {
+                if ($IsMacOS -or $IsLinux) {
                     youtube-dl -q ($episode.url) -o "$outfile" $ytdl_parameters
                 }
                 else {
@@ -491,7 +501,7 @@ if ($type -eq "series") {
                 }
                 else {
                     Write-Host -BackgroundColor "Yellow" -ForegroundColor "Black" -Object " Download failed, trying fallback url " -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
-                    if ($IsMacOS) {
+                    if ($IsMacOS -or $IsLinux) {
                         youtube-dl -q ($episode.url_fallback) -o "$outfile" $ytdl_parameters
                     }
                     else {
