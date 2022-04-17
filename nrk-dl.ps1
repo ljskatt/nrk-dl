@@ -500,15 +500,20 @@ if ($type -eq "series") {
                     Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " Success " -NoNewline; Write-Host -Object "|"
                 }
                 else {
-                    Write-Host -BackgroundColor "Yellow" -ForegroundColor "Black" -Object " Download failed, trying fallback url " -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
-                    if ($IsMacOS -or $IsLinux) {
-                        youtube-dl -q ($episode.url_fallback) -o "$outfile" $ytdl_parameters
-                    }
-                    else {
-                        & "$root_location\youtube-dl.exe" -q ($episode.url_fallback) -o "$outfile" $ytdl_parameters
-                    }
-                    if (Test-Path -PathType "Leaf" -Path "$outfile") {
-                        Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " Success " -NoNewline; Write-Host -Object "|"
+                    if ($episode.url_fallback) {
+                        Write-Host -BackgroundColor "Yellow" -ForegroundColor "Black" -Object " Download failed, trying fallback url " -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
+                        if ($IsMacOS -or $IsLinux) {
+                            youtube-dl -q ($episode.url_fallback) -o "$outfile" $ytdl_parameters
+                        }
+                        else {
+                            & "$root_location\youtube-dl.exe" -q ($episode.url_fallback) -o "$outfile" $ytdl_parameters
+                        }
+                        if (Test-Path -PathType "Leaf" -Path "$outfile") {
+                            Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " Success " -NoNewline; Write-Host -Object "|"
+                        }
+                        else {
+                            Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " Failed " -NoNewline; Write-Host -Object "|"
+                        }
                     }
                     else {
                         Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " Failed " -NoNewline; Write-Host -Object "|"
