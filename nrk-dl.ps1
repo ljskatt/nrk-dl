@@ -128,8 +128,9 @@ if ($DisableSSLCertVerify) {
 else {
     $ytdl_parameters = ''
 }
+
 if ($IsMacOS -or $IsLinux) {
-    if (Get-Command "youtube-dl") {
+    if (Get-Command -Name "youtube-dl") {
         Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " youtube-dl OK " -NoNewline; Write-Host -Object "|"; Write-Host ""
     }
     else {
@@ -138,16 +139,22 @@ if ($IsMacOS -or $IsLinux) {
 }
 else {
     if (-not (Test-Path -PathType "Leaf" -Path "youtube-dl.exe")) {
-        Write-Output "" "Downloading youtube-dl"
-        Invoke-WebRequest -Uri "https://youtube-dl.org/downloads/latest/youtube-dl.exe" -OutFile "youtube-dl.exe"
-        if (Test-Path -PathType "Leaf" -Path "youtube-dl.exe") {
-            Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " Success " -NoNewline; Write-Host -Object "|"; Write-Host ""
+        $downloadaccept = Read-Host -Prompt "youtube-dl.exe (required-package) is not installed, do you want us to download it? Source: https://youtube-dl.org/downloads/latest/youtube-dl.exe (Y/n)`n"
+        if ($downloadaccept -in '','y','yes') {
+            Write-Output "" "Downloading youtube-dl"
+            Invoke-WebRequest -Uri "https://youtube-dl.org/downloads/latest/youtube-dl.exe" -OutFile "youtube-dl.exe"
+            if (Test-Path -PathType "Leaf" -Path "youtube-dl.exe") {
+                Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " Success " -NoNewline; Write-Host -Object "|"; Write-Host ""
+            }
+            else {
+                Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " Failed " -NoNewline; Write-Host -Object "|"
+                exit
+            }
         }
         else {
-            Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " Failed " -NoNewline; Write-Host -Object "|"
+            Write-Host -BackgroundColor "Red" -ForegroundColor "White" -Object " Terminated due to missing package " -NoNewline; Write-Host -Object "|"
             exit
         }
-        
     }
     if (-not (Test-Path -Path "C:\Windows\System32\MSVCR100.dll" -PathType "leaf")) {
         Write-Host -Object ""
@@ -158,7 +165,7 @@ else {
 }
 
 if ($IsMacOS -or $IsLinux) {
-    if (Get-Command "ffmpeg") {
+    if (Get-Command -Name "ffmpeg") {
         Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " ffmpeg OK " -NoNewline; Write-Host -Object "|"; Write-Host ""
     }
     else {
@@ -167,14 +174,21 @@ if ($IsMacOS -or $IsLinux) {
 }
 else {
     if (-not (Test-Path -PathType "Leaf" -Path "ffmpeg.exe")) {
-        Write-Output "Downloading ffmpeg"
-        Invoke-WebRequest -Uri "https://cdn.serverhost.no/ljskatt/ffmpeg.exe" -OutFile "ffmpeg.exe"
-        
-        if (Test-Path -PathType "Leaf" -Path "ffmpeg.exe") {
-            Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " Success " -NoNewline; Write-Host -Object "|"; Write-Host ""
+        $downloadaccept = $null
+        $downloadaccept = Read-Host -Prompt "ffmpeg.exe (required-package) is not installed, do you want us to download it? Source: https://cdn.serverhost.no/ljskatt/ffmpeg.exe (Y/n)`n"
+        if ($downloadaccept -in '','y','yes') {
+            Write-Output "Downloading ffmpeg"
+            Invoke-WebRequest -Uri "https://cdn.serverhost.no/ljskatt/ffmpeg.exe" -OutFile "ffmpeg.exe"
+            if (Test-Path -PathType "Leaf" -Path "ffmpeg.exe") {
+                Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " Success " -NoNewline; Write-Host -Object "|"; Write-Host ""
+            }
+            else {
+                Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " Failed " -NoNewline; Write-Host -Object "|"
+                exit
+            }
         }
         else {
-            Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " Failed " -NoNewline; Write-Host -Object "|"
+            Write-Host -BackgroundColor "Red" -ForegroundColor "White" -Object " Terminated due to missing package " -NoNewline; Write-Host -Object "|"
             exit
         }
     }
