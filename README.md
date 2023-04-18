@@ -20,7 +20,7 @@ Dette vil automatisk bli lastet ned når du kjører scriptet:
 
 Last ned filen og kjør kommandoen for å begynne å laste ned episoden/episoder, scriptet vil selv laste ned dependencies som den trenger.
 
-`.\nrk-dl.ps1 [-Name] <program> [-DropVideo] [-DropSubtitles] [-DropImages] [-LegacyFormatting] [-IncludeExtras] [-IncludeDescriptions] [-DisableSSLCertVerify] [-Debugging] [-Alignment_TheTVDB]`
+`.\nrk-dl.ps1 [-Name] <program> [-DropVideo] [-DropSubtitles] [-DropImages] [-SeasonFilter <season>] [-LegacyFormatting] [-IncludeExtras] [-IncludeDescriptions] [-DisableSSLCertVerify] [-Debugging] [-Alignment_TheTVDB]`
 
 ### Eksempel
 
@@ -31,6 +31,9 @@ https://tv.nrk.no/program/KOID20001420
 
 `.\nrk-dl.ps1 "fleksnes"`
 Scriptet vil laste ned alle episodene av Fleksnes
+
+`.\nrk-dl.ps1 "fantorangen" -SeasonFilter 3`
+Scriptet vil laste ned alle episodene av Fantorangen i sesong 3
 
 `.\nrk-dl.ps1 "KOID20001420"`
 Scriptet vil laste ned programmet
