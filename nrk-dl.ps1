@@ -16,6 +16,10 @@ param (
     $DropImages,
 
     [Parameter()]
+    [string]
+    $SeasonFilter,
+
+    [Parameter()]
     [switch]
     $LegacyFormatting,
 
@@ -202,7 +206,7 @@ if (-not (Test-Path -PathType "Container" -Path "downloads")) {
     else {
         Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " Could not create downloads folder " -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
         exit
-    }   
+    }
 }
 
 $seasons = $null
@@ -312,6 +316,13 @@ if ($DropSubtitles) {
 }
 else {
     Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " ON " -NoNewline; Write-Host -Object "|"
+}
+Write-Host "Season Filter:         |" -NoNewline
+if ($SeasonFilter) {
+    Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " Only downloading season $SeasonFilter " -NoNewline; Write-Host -Object "|"
+}
+else {
+    Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " No Filter " -NoNewline; Write-Host -Object "|"
 }
 
 Write-Host "Legacy Formatting:     |" -NoNewline
@@ -435,6 +446,14 @@ if ($type -eq "series") {
         }
     }
     foreach ($season in $seasons) {
+        if ($SeasonFilter) {
+            if (-not ($season -eq $SeasonFilter)) {
+                Write-Output "Skipping season $season"
+                continue
+            } else {
+                Write-Output "Downloading season $season"
+            }
+        }
         $episodes_req = Invoke-RestMethod -Uri "https://psapi.nrk.no/tv/catalog/series/$name/seasons/$season"
         foreach ($episode_raw in $episodes_req._embedded.episodes) {
             Get-Episodeinfo
@@ -633,7 +652,7 @@ if ($type -eq "series") {
             else {
                 $outfile = ($image.seasondn + "/" + $image.id + ".jpg")
             }
-            
+
             if (Test-Path -PathType "Leaf" -Path "$outfile") {
                 Write-Output "Image ($img_dl_count/$images_count) already exists, skipping"
             }
@@ -689,7 +708,7 @@ if ($type -eq "series") {
             else {
                 $outfile = ($description.seasondn + "/" + $description.id + "-description.txt")
             }
-            
+
             if (Test-Path -PathType "Leaf" -Path "$outfile") {
                 Write-Output "Description ($desc_dl_count/$desc_count) already exists, skipping"
             }
