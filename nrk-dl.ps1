@@ -33,7 +33,7 @@ param (
 
     [Parameter()]
     [switch]
-    $DisableSSLCertVerify, # This will only affect youtube-dl downloads and not connection to NRK api, SHOULD ONLY BE USED IF YOU GET ERRORS LIKE: [SSL: CERTIFICATE_VERIFY_FAILED]
+    $DisableSSLCertVerify, # This will only affect yt-dlp downloads and not connection to NRK api, SHOULD ONLY BE USED IF YOU GET ERRORS LIKE: [SSL: CERTIFICATE_VERIFY_FAILED]
 
     [Parameter()]
     [switch]
@@ -134,20 +134,20 @@ else {
 }
 
 if ($IsMacOS -or $IsLinux) {
-    if (Get-Command -Name "youtube-dl") {
-        Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " youtube-dl OK " -NoNewline; Write-Host -Object "|"; Write-Host ""
+    if (Get-Command -Name "yt-dlp") {
+        Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " yt-dlp OK " -NoNewline; Write-Host -Object "|"; Write-Host ""
     }
     else {
-        Write-Host -BackgroundColor "Red" -ForegroundColor "White" -Object " youtube-dl is missing, please install it first " -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
+        Write-Host -BackgroundColor "Red" -ForegroundColor "White" -Object " yt-dlp is missing, please install it first " -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
     }
 }
 else {
-    if (-not (Test-Path -PathType "Leaf" -Path "youtube-dl.exe")) {
-        $downloadaccept = Read-Host -Prompt "youtube-dl.exe (required-package) is not installed, do you want us to download it? Source: https://youtube-dl.org/downloads/latest/youtube-dl.exe (Y/n)`n"
+    if (-not (Test-Path -PathType "Leaf" -Path "yt-dlp.exe")) {
+        $downloadaccept = Read-Host -Prompt "yt-dlp.exe (required-package) is not installed, do you want us to download it? Source: https://github.com/yt-dlp/yt-dlp (Y/n)`n"
         if ($downloadaccept -in '','y','yes') {
-            Write-Output "" "Downloading youtube-dl"
-            Invoke-WebRequest -Uri "https://youtube-dl.org/downloads/latest/youtube-dl.exe" -OutFile "youtube-dl.exe"
-            if (Test-Path -PathType "Leaf" -Path "youtube-dl.exe") {
+            Write-Output "" "Downloading yt-dlp"
+            Invoke-WebRequest -Uri "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe" -OutFile "yt-dlp.exe"
+            if (Test-Path -PathType "Leaf" -Path "yt-dlp.exe") {
                 Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " Success " -NoNewline; Write-Host -Object "|"; Write-Host ""
             }
             else {
@@ -162,7 +162,7 @@ else {
     }
     if (-not (Test-Path -Path "C:\Windows\System32\MSVCR100.dll" -PathType "leaf")) {
         Write-Host -Object ""
-        Write-Host -BackgroundColor "Red" -ForegroundColor "White" -Object " MSVCR100.dll (required by youtube-dl) is missing, please install missing C++ library: " -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
+        Write-Host -BackgroundColor "Red" -ForegroundColor "White" -Object " MSVCR100.dll (required by yt-dlp) is missing, please install missing C++ library: " -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
         Write-Host -BackgroundColor "Red" -ForegroundColor "White" -Object " https://www.microsoft.com/en-US/download/details.aspx?id=8328 " -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
         Write-Host -Object ""
     }
@@ -390,10 +390,10 @@ if ($type -eq "standalone") {
             Write-Output "Video: Downloading"
         }
         if ($IsMacOS -or $IsLinux) {
-            youtube-dl "$standalone" $ytdl_parameters
+            yt-dlp "$standalone" $ytdl_parameters
         }
         else {
-            & "$root_location\youtube-dl.exe" "$standalone" $ytdl_parameters
+            & "$root_location\yt-dlp.exe" "$standalone" $ytdl_parameters
         }
         Write-Output "Video: Downloaded"
     }
@@ -524,10 +524,10 @@ if ($type -eq "series") {
                     Write-Output "Downloading ($download_count/$episodes_count)"
                 }
                 if ($IsMacOS -or $IsLinux) {
-                    youtube-dl -q ($episode.url) -o "$outfile" $ytdl_parameters
+                    yt-dlp -q ($episode.url) -o "$outfile" $ytdl_parameters
                 }
                 else {
-                    & "$root_location\youtube-dl.exe" -q ($episode.url) -o "$outfile" $ytdl_parameters
+                    & "$root_location\yt-dlp.exe" -q ($episode.url) -o "$outfile" $ytdl_parameters
                 }
                 if (Test-Path -PathType "Leaf" -Path "$outfile") {
                     Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " Success " -NoNewline; Write-Host -Object "|"
@@ -536,10 +536,10 @@ if ($type -eq "series") {
                     if ($episode.url_fallback) {
                         Write-Host -BackgroundColor "Yellow" -ForegroundColor "Black" -Object " Download failed, trying fallback url " -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
                         if ($IsMacOS -or $IsLinux) {
-                            youtube-dl -q ($episode.url_fallback) -o "$outfile" $ytdl_parameters
+                            yt-dlp -q ($episode.url_fallback) -o "$outfile" $ytdl_parameters
                         }
                         else {
-                            & "$root_location\youtube-dl.exe" -q ($episode.url_fallback) -o "$outfile" $ytdl_parameters
+                            & "$root_location\yt-dlp.exe" -q ($episode.url_fallback) -o "$outfile" $ytdl_parameters
                         }
                         if (Test-Path -PathType "Leaf" -Path "$outfile") {
                             Write-Host -Object "|" -NoNewline; Write-Host -BackgroundColor "Green" -ForegroundColor "Black" -Object " Success " -NoNewline; Write-Host -Object "|"
