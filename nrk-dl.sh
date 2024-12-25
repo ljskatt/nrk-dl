@@ -3,12 +3,12 @@ parallell="$1"
 threads="$2"
 program="$3"
 min_freespace="1048576" # 1GB er 1048576
-packages="youtube-dl curl jq screen"
+packages="yt-dlp curl jq screen"
 
 ##### Installasjon av pakker som NRK-DL trenger for å fungere
 if [ ! -f "nrk-dl-installed.txt" ]; then
     while true; do
-        echo "NRK-DL krever at youtube-dl, curl, jq og screen installeres for at NRK-DL skal fungere" ""
+        echo "NRK-DL krever at yt-dlp, curl, jq og screen installeres for at NRK-DL skal fungere" ""
         read -p "Ønsker du at vi gjør dette for deg automatisk [y/n/q]? " install
         case $install in
             [Yy]* ) break;;
@@ -156,7 +156,7 @@ if [ "$parallell" = "0" ]; then
                 progress=$(expr $progress + 1)
                 printf "\n\n"
                 echo "Starter nedlastning ($progress/$links_num)"
-                youtube-dl "$link"
+                yt-dlp "$link"
                 break;
             else
                 echo "Lite plass ledig, avventer til det er $(expr $min_freespace / 1048576)GB plass ledig, venter 30 sekunder..."
@@ -185,7 +185,7 @@ if [ "$parallell" = "1" ]; then
                     thread_num=$(expr $thread_num + 1)
                     screen -S "nrk-dl-$program-$thread_num" -d -m
                     sleep 0.1
-                    screen -r "nrk-dl-$program-$thread_num" -X stuff "youtube-dl $link"
+                    screen -r "nrk-dl-$program-$thread_num" -X stuff "yt-dlp $link"
                     sleep 0.1
                     screen -r "nrk-dl-$program-$thread_num" -X stuff '\n'
                     sleep 0.1

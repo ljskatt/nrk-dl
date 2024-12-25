@@ -13,8 +13,8 @@ Avtalen med Norwaco ble fornyet, derfor ble motivet til dette prosjeket endret t
 
 Dette vil automatisk bli lastet ned når du kjører scriptet:
 
-- youtube-dl.exe - Denne pakken gjør at man kan laste ned videofilene fra NRK sine servere
-- ffmpeg.exe - Youtube-dl benytter dette programmet når det evenuelt er problemer med video eller lyd
+- yt-dlp.exe - Denne pakken gjør at man kan laste ned videofilene fra NRK sine servere
+- ffmpeg.exe - yt-dlp benytter dette programmet når det evenuelt er problemer med video eller lyd
 
 ### Start
 
@@ -50,7 +50,7 @@ Scriptet vil laste ned programmet
 
 Dette vil automatisk bli lastet ned når du kjører scriptet (Støtter Debian-baserte, Arch-baserte distroer og CentOS for øyeblikket)
 
-- youtube-dl - Denne pakken gjør at man kan laste ned videofilen fra NRK sine servere
+- yt-dlp - Denne pakken gjør at man kan laste ned videofilen fra NRK sine servere
 - curl - Denne pakken trenger man for å kunne kommunisere med NRK sitt API
 - jq - Denne pakken brukes til å hente ut informasjon fra responsen til NRK sitt api
 - screen - Denne pakken brukes når man laster ned parallellt
