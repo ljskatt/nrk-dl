@@ -130,7 +130,7 @@ if ($DisableSSLCertVerify) {
     $ytdl_parameters = '--no-check-certificate'
 }
 else {
-    $ytdl_parameters = ''
+    $ytdl_parameters = $null
 }
 
 if ($IsMacOS -or $IsLinux) {
