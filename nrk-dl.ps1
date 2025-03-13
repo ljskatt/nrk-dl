@@ -33,7 +33,7 @@ param (
 
     [Parameter()]
     [switch]
-    $DisableSSLCertVerify, # This will only affect yt-dlp downloads and not connection to NRK api, SHOULD ONLY BE USED IF YOU GET ERRORS LIKE: [SSL: CERTIFICATE_VERIFY_FAILED]
+    $DisableSSLCertVerify, # This will only affect yt-dlp downloads and not connection to NRK API, SHOULD ONLY BE USED IF YOU GET ERRORS LIKE: [SSL: CERTIFICATE_VERIFY_FAILED]
 
     [Parameter()]
     [switch]
@@ -163,7 +163,7 @@ else {
     if (-not (Test-Path -Path "C:\Windows\System32\MSVCR100.dll" -PathType "leaf")) {
         Write-Host -Object ""
         Write-Host -BackgroundColor "Red" -ForegroundColor "White" -Object " MSVCR100.dll (required by yt-dlp) is missing, please install missing C++ library: " -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
-        Write-Host -BackgroundColor "Red" -ForegroundColor "White" -Object " https://www.microsoft.com/en-US/download/details.aspx?id=8328 " -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
+        Write-Host -BackgroundColor "Red" -ForegroundColor "White" -Object " https://www.microsoft.com/en-US/download/details.aspx?id=26999 " -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
         Write-Host -Object ""
     }
 }
