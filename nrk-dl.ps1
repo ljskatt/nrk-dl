@@ -33,7 +33,7 @@ param (
 
     [Parameter()]
     [switch]
-    $DisableSSLCertVerify, # This will only affect yt-dlp downloads and not connection to NRK api, SHOULD ONLY BE USED IF YOU GET ERRORS LIKE: [SSL: CERTIFICATE_VERIFY_FAILED]
+    $DisableSSLCertVerify, # This will only affect yt-dlp downloads and not connection to NRK API, SHOULD ONLY BE USED IF YOU GET ERRORS LIKE: [SSL: CERTIFICATE_VERIFY_FAILED]
 
     [Parameter()]
     [switch]
@@ -163,7 +163,7 @@ else {
     if (-not (Test-Path -Path "C:\Windows\System32\MSVCR100.dll" -PathType "leaf")) {
         Write-Host -Object ""
         Write-Host -BackgroundColor "Red" -ForegroundColor "White" -Object " MSVCR100.dll (required by yt-dlp) is missing, please install missing C++ library: " -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
-        Write-Host -BackgroundColor "Red" -ForegroundColor "White" -Object " https://www.microsoft.com/en-US/download/details.aspx?id=8328 " -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
+        Write-Host -BackgroundColor "Red" -ForegroundColor "White" -Object " https://www.microsoft.com/en-US/download/details.aspx?id=26999 " -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
         Write-Host -Object ""
     }
 }
@@ -211,16 +211,32 @@ if (-not (Test-Path -PathType "Container" -Path "downloads")) {
 
 $seasons = $null
 $standalone = $null
-$series_req = Invoke-RestMethod -Uri "https://psapi.nrk.no/tv/catalog/series/$name"
-$seasons = $series_req._links.seasons.name
 
-if ($Alignment_TheTVDB) {
-    $alignment_file = "alignment-thetvdb-$name.json"
-    if (Test-Path -Path $alignment_file) {
-        $alignment = Get-Content -Path $alignment_file | ConvertFrom-Json
+try {
+    $series_req = Invoke-RestMethod -Uri "https://psapi.nrk.no/tv/catalog/series/$name"
+    $seasons = $series_req._links.seasons.name
+
+    if ($Alignment_TheTVDB) {
+        $alignment_file = "alignment-thetvdb-$name.json"
+        if (Test-Path -Path $alignment_file) {
+            $alignment = Get-Content -Path $alignment_file | ConvertFrom-Json
+        }
+        else {
+            Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " Alignmentfile ($alignment_file) does not exist " -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
+            exit
+        }
     }
-    else {
-        Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " Alignmentfile ($alignment_file) does not exist " -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
+}
+catch {
+    try {
+        $standalone_req = (Invoke-RestMethod -Uri "https://psapi.nrk.no/tv/catalog/programs/$name")
+        $standalone = $standalone_req._links.share.href
+        if ($standalone_req) {
+            $type = "standalone"
+        }
+    }
+    catch {
+        Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " Could not find program/series " -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
         exit
     }
 }
@@ -279,17 +295,6 @@ if ($seasons) {
     }
     elseif ($series_req.standard.titles.title) {
         $seriestitle = Format-Name -Name ($series_req.standard.titles.title)
-    }
-}
-else {
-    $standalone_req = (Invoke-RestMethod -Uri "https://psapi.nrk.no/tv/catalog/programs/$name")
-    $standalone = $standalone_req._links.share.href
-    if ($standalone_req) {
-        $type = "standalone"
-    }
-    else {
-        Write-Host -BackgroundColor "Red" -ForegroundColor "Black" -Object " Could not find program/series " -NoNewline; Write-Host -ForegroundColor "DarkGray" -Object "|"
-        exit
     }
 }
 
