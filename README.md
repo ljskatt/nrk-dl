@@ -1,5 +1,9 @@
 # NRK-DL
 
+> [!WARNING]
+> Dette prosjektet vedlikeholdes ikke lenger.<br>
+> Bruk arvtakeren [nrk-dl-web](https://github.com/ljskatt/nrk-dl-web) i stedet, som kjører rett i nettleseren uten noe å installere: [nrk-dl.ljskatt.no](https://nrk-dl.ljskatt.no)
+
 Lovligheten rundt dette verktøyet er uklart, anbefaler å bare benytte verktøyet til privat, ikke-kommersiell bruk.<br>
 **Bruk av verktøyet gjøres på egen risiko.** [Opphavsrett på NRK](https://www.nrk.no/etikk/opphavsrett-pa-nrk.no-1.2843522)
 
